@@ -1,0 +1,23 @@
+{
+  "name": "aiysosis-vue",
+  "version": "1.0.0",
+  "description": "custom vue based on @mini-vue",
+  "main": "main.ts",
+  "author": "aiysosis@qq.com",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "test": "vitest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.41.0",
+    "@typescript-eslint/parser": "^5.41.0",
+    "eslint": "^8.26.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1",
+    "typescript": "^4.8.4",
+    "vitest": "^0.24.3"
+  }
+}
