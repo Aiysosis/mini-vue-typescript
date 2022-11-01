@@ -13,5 +13,9 @@ describe("effect", () => {
 
 		user.age++;
 		expect(nextAge).toBe(12);
+
+		//test if effect only run once
+		user.age++;
+		expect(nextAge).toBe(13);
 	});
 });
