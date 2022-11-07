@@ -12,12 +12,13 @@ class ReactiveEffect {
 	}
 }
 
+type DepsMap = Map<string, Set<ReactiveEffect>>;
+type TargetMap = WeakMap<object, DepsMap>;
+
 /**
  * Data Structure:
  * TargetMap: WeakMap -> depsMap: Map -> deps: Set
  */
-type DepsMap = Map<string, Set<ReactiveEffect>>;
-type TargetMap = WeakMap<object, DepsMap>;
 const targetMap: TargetMap = new WeakMap();
 
 /**
@@ -26,8 +27,6 @@ const targetMap: TargetMap = new WeakMap();
  * @param key 属性名
  */
 export function track(target: object, key: string) {
-	//target->key->dep(depends)
-	//targetMap->depMap->dep
 	let depsMap = targetMap.get(target);
 	if (!depsMap) {
 		depsMap = new Map();
@@ -49,6 +48,7 @@ export function track(target: object, key: string) {
 export function trigger(target: object, key: string) {
 	let depsMap = targetMap.get(target);
 	let deps = depsMap.get(key);
+	//如果有scheduler那么运行scheduler，否则运行run
 	for (let effect of deps) {
 		if (effect.scheduler) {
 			effect.scheduler();

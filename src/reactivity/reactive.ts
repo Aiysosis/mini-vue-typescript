@@ -1,15 +1,15 @@
 import { track, trigger } from "./effect";
 
-export function reactive(raw) {
-	let proxy = new Proxy(raw, {
-		get(obj, key) {
+export function reactive<T extends object>(raw: T) {
+	let proxy = new Proxy<T>(raw, {
+		get(obj, key: string) {
 			const res = Reflect.get(obj, key);
 
 			track(obj, key);
 
 			return res;
 		},
-		set(obj, key, val) {
+		set(obj, key: string, val) {
 			const res = Reflect.set(obj, key, val);
 
 			trigger(obj, key);
