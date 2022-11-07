@@ -1,31 +1,31 @@
 class ReactiveEffect {
 	private _fn: Function;
+	scheduler: Function | undefined;
 
-	constructor(fn: Function) {
+	constructor(fn: Function, scheduler?: Function) {
 		this._fn = fn;
+		this.scheduler = scheduler;
 	}
-	run() {
+	run(this: ReactiveEffect) {
 		activeEffect = this;
 		return this._fn();
 	}
 }
 
-//注册依赖需要相应的数据结构
-/*依赖体现为函数，一个key可以绑定多个依赖，一个对象有多个key，可能有多个对象
-DS-(oneToMany)->target-(oneToMany)->key-(oneToMany)->ReactiveEffect
-*/
+/**
+ * Data Structure:
+ * TargetMap: WeakMap -> depsMap: Map -> deps: Set
+ */
+type DepsMap = Map<string, Set<ReactiveEffect>>;
+type TargetMap = WeakMap<object, DepsMap>;
+const targetMap: TargetMap = new WeakMap();
 
 /**
- * key:target(Object)
- * value:keyMap(Map)
+ *
+ * @param target 对象
+ * @param key 属性名
  */
-const targetMap = new Map();
-/**
- * target[key]：被依赖的属性
- * @param target
- * @param key
- */
-export function track(target, key) {
+export function track(target: object, key: string) {
 	//target->key->dep(depends)
 	//targetMap->depMap->dep
 	let depsMap = targetMap.get(target);
@@ -41,17 +41,29 @@ export function track(target, key) {
 	deps.add(activeEffect);
 }
 
-export function trigger(target, key) {
+/**
+ *
+ * @param target 对象
+ * @param key 属性名
+ */
+export function trigger(target: object, key: string) {
 	let depsMap = targetMap.get(target);
 	let deps = depsMap.get(key);
 	for (let effect of deps) {
-		effect.run();
+		if (effect.scheduler) {
+			effect.scheduler();
+		} else {
+			effect.run();
+		}
 	}
 }
 
-let activeEffect;
-export function effect(fn: Function) {
-	let _effect = new ReactiveEffect(fn);
+let activeEffect: ReactiveEffect;
+type EffectOpts = {
+	["scheduler"]: Function;
+};
+export function effect(fn: Function, options?: EffectOpts) {
+	let _effect = new ReactiveEffect(fn, options?.scheduler);
 	_effect.run();
 	return _effect.run.bind(_effect); //绑定this,但是不立即执行
 }
