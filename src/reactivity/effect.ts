@@ -1,7 +1,10 @@
+import { extend } from "./../shared/index";
 class ReactiveEffect {
 	private _fn: Function;
 	scheduler: Function | undefined;
 	depsArr: Set<ReactiveEffect>[] = [];
+	active = true; //用于实现只stop一次
+	onStop?: Function;
 
 	constructor(fn: Function, scheduler?: Function) {
 		this._fn = fn;
@@ -12,9 +15,19 @@ class ReactiveEffect {
 		return this._fn();
 	}
 	stop(this: ReactiveEffect) {
-		for (let deps of this.depsArr) {
-			deps.delete(this);
+		if (this.active) {
+			cleanupEffect(this);
+			this.active = false;
+			if (this.onStop) {
+				this.onStop();
+			}
 		}
+	}
+}
+
+function cleanupEffect(effect: ReactiveEffect) {
+	for (let deps of effect.depsArr) {
+		deps.delete(effect);
 	}
 }
 
@@ -43,6 +56,8 @@ export function track(target: object, key: string) {
 		deps = new Set();
 		depsMap.set(key, deps);
 	}
+
+	if (!activeEffect) return;
 	deps.add(activeEffect);
 	activeEffect.depsArr.push(deps);
 }
@@ -68,6 +83,7 @@ export function trigger(target: object, key: string) {
 let activeEffect: ReactiveEffect;
 type EffectOpts = {
 	["scheduler"]?: Function;
+	["onStop"]?: Function;
 };
 
 type Runner = {
@@ -75,8 +91,10 @@ type Runner = {
 	(): any;
 };
 
-export function effect(fn: Function, options?: EffectOpts) {
-	let _effect = new ReactiveEffect(fn, options?.scheduler);
+export function effect(fn: Function, options: EffectOpts = {}) {
+	let _effect = new ReactiveEffect(fn, options.scheduler);
+	// _effect.onStop = options.onStop;
+	extend(_effect, options);
 	//直接用runner去比对会浪费性能，可以runner中指向_effect，这样可以更方便操作
 	//为此需要定义类型
 	const runner: Runner = _effect.run.bind(_effect) as Runner;
