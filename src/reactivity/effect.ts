@@ -1,6 +1,7 @@
 class ReactiveEffect {
 	private _fn: Function;
 	scheduler: Function | undefined;
+	depsArr: Set<ReactiveEffect>[] = [];
 
 	constructor(fn: Function, scheduler?: Function) {
 		this._fn = fn;
@@ -9,6 +10,11 @@ class ReactiveEffect {
 	run(this: ReactiveEffect) {
 		activeEffect = this;
 		return this._fn();
+	}
+	stop(this: ReactiveEffect) {
+		for (let deps of this.depsArr) {
+			deps.delete(this);
+		}
 	}
 }
 
@@ -38,6 +44,7 @@ export function track(target: object, key: string) {
 		depsMap.set(key, deps);
 	}
 	deps.add(activeEffect);
+	activeEffect.depsArr.push(deps);
 }
 
 /**
@@ -60,10 +67,24 @@ export function trigger(target: object, key: string) {
 
 let activeEffect: ReactiveEffect;
 type EffectOpts = {
-	["scheduler"]: Function;
+	["scheduler"]?: Function;
 };
+
+type Runner = {
+	effect: ReactiveEffect;
+	(): any;
+};
+
 export function effect(fn: Function, options?: EffectOpts) {
 	let _effect = new ReactiveEffect(fn, options?.scheduler);
+	//直接用runner去比对会浪费性能，可以runner中指向_effect，这样可以更方便操作
+	//为此需要定义类型
+	const runner: Runner = _effect.run.bind(_effect) as Runner;
+	runner.effect = _effect;
 	_effect.run();
-	return _effect.run.bind(_effect); //绑定this,但是不立即执行
+	return runner;
+}
+
+export function stop(runner: Runner) {
+	runner.effect.stop();
 }

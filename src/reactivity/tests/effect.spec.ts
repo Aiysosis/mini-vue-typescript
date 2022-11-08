@@ -1,4 +1,4 @@
-import { effect } from "../effect";
+import { effect, stop } from "../effect";
 import { reactive } from "../reactive";
 
 describe("effect", () => {
@@ -46,6 +46,10 @@ describe("effect", () => {
 		expect(res).toBe("foo");
 	});
 
+	/**
+	 * scheduler特性：允许用户在参数中传入一个scheduler函数,
+	 * 初始化时仍然调用run方法，但是之后依赖触发时调用scheduler。
+	 */
 	it("scheduler", () => {
 		let dummy;
 		let run: any;
@@ -59,16 +63,39 @@ describe("effect", () => {
 			},
 			{ scheduler }
 		);
-		expect(scheduler).not.toHaveBeenCalled();
-		expect(dummy).toBe(1);
+		expect(scheduler).not.toHaveBeenCalled(); //scheduler初始化时不调用
+		expect(dummy).toBe(1); //初始化时调用处理函数
 		// should be called on first trigger
 		obj.foo++;
-		expect(scheduler).toHaveBeenCalledTimes(1);
+		expect(scheduler).toHaveBeenCalledTimes(1); //更新时调用scheduler
 		// // should not run yet
 		expect(dummy).toBe(1);
 		// // manually run
 		run();
 		// // should have run
 		expect(dummy).toBe(2);
+	});
+
+	/**
+	 * stop函数接受runner，可以在依赖触发时进行阻止
+	 * 我们只要在stop调用时找到runner对应的effect，
+	 * 把它从deps中删除，这样后续的更新就不会再被触发，
+	 * 而runner的调用时不受影响的。
+	 */
+	it("stop", () => {
+		let dummy;
+		const obj = reactive({ prop: 1 });
+		const runner = effect(() => {
+			dummy = obj.prop;
+		});
+		obj.prop = 2;
+		expect(dummy).toBe(2);
+		stop(runner); //阻止runner运行
+		obj.prop = 3; //如果是obj.prop++ 那么直接报错
+		expect(dummy).toBe(2);
+
+		// stopped effect should still be manually callable
+		runner();
+		expect(dummy).toBe(3);
 	});
 });
