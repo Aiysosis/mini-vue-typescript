@@ -19,3 +19,16 @@ export function reactive<T extends object>(raw: T) {
 	});
 	return proxy;
 }
+
+export function readOnly<T extends object>(raw: T) {
+	let proxy = new Proxy<T>(raw, {
+		get(obj, key: string) {
+			const res = Reflect.get(obj, key);
+			return res;
+		},
+		set(obj, key: string, val) {
+			return true;
+		},
+	});
+	return proxy;
+}
