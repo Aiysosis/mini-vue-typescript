@@ -1,4 +1,4 @@
-import { readonly } from "../reactive";
+import { isReadonly, readonly } from "../reactive";
 
 describe("readonly", () => {
 	it("readonly", () => {
@@ -17,5 +17,19 @@ describe("readonly", () => {
 		console.warn = vi.fn();
 		obj.foo = 11;
 		expect(console.warn).toBeCalled();
+	});
+
+	it("nested reactive", () => {
+		const origin = {
+			nested: {
+				foo: 1,
+			},
+			arr: [{ bar: 2 }],
+		};
+		const observed = readonly(origin);
+		expect(isReadonly(observed)).toBe(true);
+		expect(isReadonly(observed.nested)).toBe(true);
+		expect(isReadonly(observed.arr)).toBe(true);
+		expect(isReadonly(observed.arr[0])).toBe(true);
 	});
 });

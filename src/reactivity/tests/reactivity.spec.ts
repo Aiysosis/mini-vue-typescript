@@ -1,3 +1,4 @@
+import { effect } from "../effect";
 import { isReactive, isReadonly, reactive } from "../reactive";
 
 describe("reactivity", () => {
@@ -25,5 +26,13 @@ describe("reactivity", () => {
 		expect(isReactive(observed.nested)).toBe(true);
 		expect(isReactive(observed.arr)).toBe(true);
 		expect(isReactive(observed.arr[0])).toBe(true);
+
+		let dummy: any;
+		let runner = effect(() => {
+			dummy = observed.arr[0].bar;
+		});
+		expect(dummy).toBe(2);
+		observed.arr[0].bar++;
+		expect(dummy).toBe(3);
 	});
 });
