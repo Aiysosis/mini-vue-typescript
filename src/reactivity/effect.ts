@@ -1,4 +1,7 @@
 import { extend } from "./../shared/index";
+let activeEffect: ReactiveEffect;
+let shouldTrack = false;
+
 class ReactiveEffect {
 	private _fn: Function;
 	scheduler: Function | undefined;
@@ -11,8 +14,14 @@ class ReactiveEffect {
 		this.scheduler = scheduler;
 	}
 	run(this: ReactiveEffect) {
+		if (!this.active) {
+			return this._fn();
+		}
+		shouldTrack = true;
 		activeEffect = this;
-		return this._fn();
+		const res = this._fn();
+		shouldTrack = false;
+		return res;
 	}
 	stop(this: ReactiveEffect) {
 		if (this.active) {
@@ -29,6 +38,7 @@ function cleanupEffect(effect: ReactiveEffect) {
 	for (let deps of effect.depsArr) {
 		deps.delete(effect);
 	}
+	effect.depsArr.length = 0; //直接清空掉
 }
 
 type DepsMap = Map<string, Set<ReactiveEffect>>;
@@ -46,6 +56,13 @@ const targetMap: TargetMap = new WeakMap();
  * @param key 属性名
  */
 export function track(target: object, key: string) {
+	// if (!activeEffect) return;
+	/*if (!activeEffect.active) return;这样是不安全的，虽然可以通过相关测试
+	  因为activeEffect是公共的变量，如果创建了两个effect，然后stop第一个，那么一定会出问题
+	 */
+	// if (!shouldTrack) return;
+	if (!isTracking()) return;
+
 	let depsMap = targetMap.get(target);
 	if (!depsMap) {
 		depsMap = new Map();
@@ -57,10 +74,12 @@ export function track(target: object, key: string) {
 		depsMap.set(key, deps);
 	}
 
-	if (!activeEffect) return;
+	if (deps.has(activeEffect)) return;
 	deps.add(activeEffect);
 	activeEffect.depsArr.push(deps);
 }
+
+const isTracking = () => activeEffect && shouldTrack;
 
 /**
  *
@@ -80,7 +99,6 @@ export function trigger(target: object, key: string) {
 	}
 }
 
-let activeEffect: ReactiveEffect;
 type EffectOpts = {
 	["scheduler"]?: Function;
 	["onStop"]?: Function;
