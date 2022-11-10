@@ -16,7 +16,7 @@ export function reactive<T extends object>(raw: T) {
 	return createReactiveObject(raw, mutableHandlers);
 }
 
-export function readOnly<T extends object>(raw: T) {
+export function readonly<T extends object>(raw: T) {
 	return createReactiveObject(raw, readonlyHandlers);
 }
 

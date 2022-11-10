@@ -12,4 +12,18 @@ describe("reactivity", () => {
 		expect(isReadonly(personRef)).toBe(false);
 		expect(isReadonly(person)).toBe(false);
 	});
+
+	it("nested reactive", () => {
+		const origin = {
+			nested: {
+				foo: 1,
+			},
+			arr: [{ bar: 2 }],
+		};
+		const observed = reactive(origin);
+		expect(isReactive(observed)).toBe(true);
+		expect(isReactive(observed.nested)).toBe(true);
+		expect(isReactive(observed.arr)).toBe(true);
+		expect(isReactive(observed.arr[0])).toBe(true);
+	});
 });

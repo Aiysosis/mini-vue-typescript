@@ -1,15 +1,15 @@
-import { readOnly } from "../reactive";
+import { readonly } from "../reactive";
 
 describe("readonly", () => {
 	it("readonly", () => {
 		let origin = { foo: 10 };
-		let obj = readOnly(origin);
+		let obj = readonly(origin);
 		expect(obj).not.toBe(origin);
 		expect(obj.foo).toBe(10);
 	});
 
 	it("warn when set", () => {
-		let obj = readOnly({
+		let obj = readonly({
 			foo: 10,
 		});
 
