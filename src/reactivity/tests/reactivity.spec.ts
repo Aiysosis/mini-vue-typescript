@@ -1,5 +1,5 @@
 import { effect } from "../effect";
-import { isReactive, isReadonly, reactive } from "../reactive";
+import { isProxy, isReactive, isReadonly, reactive } from "../reactive";
 
 describe("reactivity", () => {
 	it("happy path", () => {
@@ -26,6 +26,8 @@ describe("reactivity", () => {
 		expect(isReactive(observed.nested)).toBe(true);
 		expect(isReactive(observed.arr)).toBe(true);
 		expect(isReactive(observed.arr[0])).toBe(true);
+		expect(isProxy(origin)).toBe(false);
+		expect(isProxy(observed)).toBe(true);
 
 		let dummy: any;
 		let runner = effect(() => {

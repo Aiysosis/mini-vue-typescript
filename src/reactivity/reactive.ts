@@ -31,3 +31,5 @@ export function shallowReadonly<T extends object>(raw: T) {
 export const isReactive = (val: any) => !!val[ReactiveFlags.IS_REACTIVE];
 
 export const isReadonly = (val: any) => !!val[ReactiveFlags.IS_READONLY];
+
+export const isProxy = (val: any) => isReactive(val) || isReadonly(val);
