@@ -6,6 +6,7 @@ class RefImpl<T> {
 	private _value: T;
 	private _rawValue: T;
 	public dep?: Dep = undefined;
+	public __v_is_ref = true;
 	constructor(val: T) {
 		this._rawValue = val;
 		this._value = toReactive(val);
@@ -18,7 +19,6 @@ class RefImpl<T> {
 	}
 
 	set value(newValue: any) {
-		console.log(newValue, this._rawValue);
 		if (!hasChanged(newValue, this._rawValue)) return;
 		this._rawValue = newValue;
 		this._value = toReactive(newValue);
@@ -35,4 +35,14 @@ function trackRefValue<T extends unknown>(ref: RefImpl<T>) {
 
 export function ref<T extends unknown>(raw: T) {
 	return new RefImpl(raw);
+}
+
+export function isRef(val: any): val is RefImpl<any> {
+	return !!val.__v_is_ref;
+}
+
+export function unRef(val: any) {
+	if (isRef(val)) {
+		return val.value;
+	} else return val;
 }
