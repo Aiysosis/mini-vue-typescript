@@ -5,7 +5,7 @@ let shouldTrack = false;
 class ReactiveEffect {
 	private _fn: Function;
 	scheduler: Function | undefined;
-	depsArr: Set<ReactiveEffect>[] = [];
+	deps: Set<ReactiveEffect>[] = [];
 	active = true; //用于实现只stop一次
 	onStop?: Function;
 
@@ -35,14 +35,15 @@ class ReactiveEffect {
 }
 
 function cleanupEffect(effect: ReactiveEffect) {
-	for (let deps of effect.depsArr) {
-		deps.delete(effect);
+	for (let dep of effect.deps) {
+		dep.delete(effect);
 	}
-	effect.depsArr.length = 0; //直接清空掉
+	effect.deps.length = 0; //直接清空掉
 }
 
-type DepsMap = Map<string, Set<ReactiveEffect>>;
-type TargetMap = WeakMap<object, DepsMap>;
+export type Dep = Set<ReactiveEffect>;
+export type DepsMap = Map<string, Dep>;
+export type TargetMap = WeakMap<object, DepsMap>;
 
 /**
  * Data Structure:
@@ -68,18 +69,22 @@ export function track(target: object, key: string) {
 		depsMap = new Map();
 		targetMap.set(target, depsMap);
 	}
-	let deps = depsMap.get(key);
-	if (!deps) {
-		deps = new Set();
-		depsMap.set(key, deps);
+	let dep = depsMap.get(key);
+	if (!dep) {
+		dep = new Set();
+		depsMap.set(key, dep);
 	}
 
-	if (deps.has(activeEffect)) return;
-	deps.add(activeEffect);
-	activeEffect.depsArr.push(deps);
+	trackEffects(dep);
 }
 
-const isTracking = () => activeEffect && shouldTrack;
+export function trackEffects(dep: Dep) {
+	if (dep.has(activeEffect)) return;
+	dep.add(activeEffect);
+	activeEffect.deps.push(dep);
+}
+
+export const isTracking = () => activeEffect && shouldTrack;
 
 /**
  *
@@ -88,9 +93,13 @@ const isTracking = () => activeEffect && shouldTrack;
  */
 export function trigger(target: object, key: string) {
 	let depsMap = targetMap.get(target);
-	let deps = depsMap.get(key);
+	let dep = depsMap.get(key);
 	//如果有scheduler那么运行scheduler，否则运行run
-	for (let effect of deps) {
+	triggerEffects(dep);
+}
+
+export function triggerEffects(dep: Dep) {
+	for (let effect of dep) {
 		if (effect.scheduler) {
 			effect.scheduler();
 		} else {

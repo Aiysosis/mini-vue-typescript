@@ -1,3 +1,4 @@
+import { isObject } from "@/shared/index";
 import {
 	mutableHandlers,
 	readonlyHandlers,
@@ -16,7 +17,7 @@ function createReactiveObject<T extends object>(
 	return new Proxy<T>(raw, baseHandlers);
 }
 
-export function reactive<T extends object>(raw: T) {
+export function reactive<T extends object>(raw: T): T {
 	return createReactiveObject(raw, mutableHandlers);
 }
 
@@ -33,3 +34,11 @@ export const isReactive = (val: any) => !!val[ReactiveFlags.IS_REACTIVE];
 export const isReadonly = (val: any) => !!val[ReactiveFlags.IS_READONLY];
 
 export const isProxy = (val: any) => isReactive(val) || isReadonly(val);
+
+export const toReactive = <T extends unknown>(value: T): T => {
+	let val: any = value;
+	return isObject(val) ? reactive(val) : value;
+};
+
+export const toReadonly = <T extends unknown>(value: T): T =>
+	isObject(value) ? readonly(value as Record<any, any>) : value;

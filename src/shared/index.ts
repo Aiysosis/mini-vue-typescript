@@ -26,3 +26,6 @@ export const isObject = (val: unknown): val is Record<any, any> =>
 export const objectToString = Object.prototype.toString;
 export const toTypeString = (value: unknown): string =>
 	objectToString.call(value);
+
+export const hasChanged = (newValue: any, oldValue: any) =>
+	!Object.is(newValue, oldValue);
