@@ -1,6 +1,6 @@
 import { effect } from "../effect";
 import { reactive } from "../reactive";
-import { isRef, ref, unRef } from "../ref";
+import { isRef, proxyRefs, ref, unRef } from "../ref";
 
 describe("ref", () => {
 	it("happy path", () => {
@@ -63,5 +63,20 @@ describe("ref", () => {
 		let a = ref(1);
 		expect(unRef(a)).toBe(1);
 		expect(unRef(1)).toBe(1);
+	});
+
+	it("proxyRefs", () => {
+		const user = {
+			age: ref(10),
+			name: "XiaoMing",
+		};
+		const proxyUser: any = proxyRefs(user);
+		expect(user.age.value).toBe(10);
+		expect(proxyUser.name).toBe("XiaoMing");
+		expect(proxyUser.age).toBe(10); //这里的访问不需要通过value就可以进行
+
+		proxyUser.age = 20;
+		expect(proxyUser.age).toBe(20);
+		expect(user.age.value).toBe(20);
 	});
 });

@@ -37,12 +37,19 @@ export function ref<T extends unknown>(raw: T) {
 	return new RefImpl(raw);
 }
 
-export function isRef(val: any): val is RefImpl<any> {
-	return !!val.__v_is_ref;
-}
+export const isRef = (val: any): val is RefImpl<any> => !!val.__v_is_ref;
 
-export function unRef(val: any) {
-	if (isRef(val)) {
-		return val.value;
-	} else return val;
+export const unRef = (val: any) => (isRef(val) ? val.value : val);
+
+export function proxyRefs<T extends object>(val: T) {
+	return new Proxy<T>(val, {
+		get(target, key) {
+			return unRef(Reflect.get(target, key));
+		},
+		set(target, key, value) {
+			if (isRef(target[key]) && !isRef(value)) {
+				return (target[key].value = value);
+			} else return Reflect.set(target, key, value);
+		},
+	});
 }
