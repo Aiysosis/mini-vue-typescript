@@ -69,8 +69,11 @@ describe("ref", () => {
 		const user = {
 			age: ref(10),
 			name: "XiaoMing",
+			link: ref({
+				foo: "123456",
+			}),
 		};
-		const proxyUser: any = proxyRefs(user);
+		const proxyUser = proxyRefs(user);
 		expect(user.age.value).toBe(10);
 		expect(proxyUser.name).toBe("XiaoMing");
 		expect(proxyUser.age).toBe(10); //这里的访问不需要通过value就可以进行
@@ -78,5 +81,6 @@ describe("ref", () => {
 		proxyUser.age = 20;
 		expect(proxyUser.age).toBe(20);
 		expect(user.age.value).toBe(20);
+		expect(proxyUser.link.foo).toBe("123456");
 	});
 });

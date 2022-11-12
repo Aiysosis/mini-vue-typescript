@@ -2,9 +2,14 @@ import { hasChanged, isObject } from "@/shared/index";
 import { Dep, isTracking, trackEffects, triggerEffects } from "./effect";
 import { reactive, toReactive } from "./reactive";
 
+interface Ref<T> {
+	value: T;
+	dep?: Dep;
+}
+
 class RefImpl<T> {
 	private _value: T;
-	private _rawValue: T;
+	public _rawValue: T;
 	public dep?: Dep = undefined;
 	public __v_is_ref = true;
 	constructor(val: T) {
@@ -33,15 +38,36 @@ function trackRefValue<T extends unknown>(ref: RefImpl<T>) {
 	}
 }
 
-export function ref<T extends unknown>(raw: T) {
+export function ref<T extends unknown>(raw: T): Ref<T> {
 	return new RefImpl(raw);
 }
 
-export const isRef = (val: any): val is RefImpl<any> => !!val.__v_is_ref;
+export const isRef = (val: any): val is Ref<any> => !!val.__v_is_ref;
 
-export const unRef = (val: any) => (isRef(val) ? val.value : val);
+// export const unRef = (val: any) => (isRef(val) ? val.value : val);
+export function unRef<T>(val: T): UnRef<T> {
+	if (isRef(val)) {
+		return unRef(val.value);
+	} else {
+		return val as UnRef<T>;
+	}
+}
 
-export function proxyRefs<T extends object>(val: T) {
+type UnRef<T> = T extends object
+	? T extends Ref<infer V>
+		? V
+		: T
+	: T extends infer F
+	? F
+	: never;
+
+type UnwrapRef<T extends object> = {
+	[K in keyof T]: T[K] extends Ref<infer V> ? V : T[K];
+} extends infer F
+	? F
+	: never;
+
+export function proxyRefs<T extends object>(val: T): UnwrapRef<T> {
 	return new Proxy<T>(val, {
 		get(target, key) {
 			return unRef(Reflect.get(target, key));
@@ -51,5 +77,5 @@ export function proxyRefs<T extends object>(val: T) {
 				return (target[key].value = value);
 			} else return Reflect.set(target, key, value);
 		},
-	});
+	}) as UnwrapRef<T>;
 }
