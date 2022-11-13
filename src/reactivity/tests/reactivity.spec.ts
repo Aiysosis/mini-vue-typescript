@@ -30,7 +30,7 @@ describe("reactivity", () => {
 		expect(isProxy(observed)).toBe(true);
 
 		let dummy: any;
-		let runner = effect(() => {
+		effect(() => {
 			dummy = observed.arr[0].bar;
 		});
 		expect(dummy).toBe(2);

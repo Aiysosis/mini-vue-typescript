@@ -1,18 +1,26 @@
 import { extend } from "./../shared/index";
+
+//TargetMap > DepsMap > Dep > ReactiveEffect
+export type TargetMap = WeakMap<object, DepsMap>;
+export type DepsMap = Map<string, Dep>;
+export type Dep = Set<ReactiveEffect>;
+
+const targetMap: TargetMap = new WeakMap();
+
 let activeEffect: ReactiveEffect;
 let shouldTrack = false;
 
 class ReactiveEffect {
 	private _fn: Function;
-	scheduler: Function | undefined;
-	deps: Set<ReactiveEffect>[] = [];
-	active = true; //用于实现只stop一次
-	onStop?: Function;
+	public scheduler?: Function;
+	public deps?: Dep[];
+	public active = true; //用于实现只stop一次
+	public onStop?: Function;
 
-	constructor(fn: Function, scheduler?: Function) {
+	constructor(fn: Function) {
 		this._fn = fn;
-		this.scheduler = scheduler;
 	}
+
 	run(this: ReactiveEffect) {
 		if (!this.active) {
 			return this._fn();
@@ -25,6 +33,7 @@ class ReactiveEffect {
 	}
 	stop(this: ReactiveEffect) {
 		if (this.active) {
+			//不需要反复清理
 			cleanupEffect(this);
 			this.active = false;
 			if (this.onStop) {
@@ -35,33 +44,24 @@ class ReactiveEffect {
 }
 
 function cleanupEffect(effect: ReactiveEffect) {
+	if (!effect.deps) return;
 	for (let dep of effect.deps) {
 		dep.delete(effect);
 	}
-	effect.deps.length = 0; //直接清空掉
+	effect.deps.length = 0; //直接清空deps
 }
-
-export type Dep = Set<ReactiveEffect>;
-export type DepsMap = Map<string, Dep>;
-export type TargetMap = WeakMap<object, DepsMap>;
-
-/**
- * Data Structure:
- * TargetMap: WeakMap -> depsMap: Map -> deps: Set
- */
-const targetMap: TargetMap = new WeakMap();
 
 /**
  *
  * @param target 对象
  * @param key 属性名
  */
+//这里的key使用了string，symbol的情况就没有考虑了
 export function track(target: object, key: string) {
-	// if (!activeEffect) return;
 	/*if (!activeEffect.active) return;这样是不安全的，虽然可以通过相关测试
 	  因为activeEffect是公共的变量，如果创建了两个effect，然后stop第一个，那么一定会出问题
 	 */
-	// if (!shouldTrack) return;
+	//stop之后就不需要track了，所以判断shouldTrack
 	if (!isTracking()) return;
 
 	let depsMap = targetMap.get(target);
@@ -81,6 +81,8 @@ export function track(target: object, key: string) {
 export function trackEffects(dep: Dep) {
 	if (dep.has(activeEffect)) return;
 	dep.add(activeEffect);
+
+	if (!activeEffect.deps) activeEffect.deps = [];
 	activeEffect.deps.push(dep);
 }
 
@@ -119,10 +121,10 @@ type Runner = {
 };
 
 export function effect(fn: Function, options: EffectOpts = {}) {
-	let _effect = new ReactiveEffect(fn, options.scheduler);
-	// _effect.onStop = options.onStop;
+	let _effect = new ReactiveEffect(fn);
+	//使用extend，同时设置了scheduler和onStop
 	extend(_effect, options);
-	//直接用runner去比对会浪费性能，可以runner中指向_effect，这样可以更方便操作
+	//直接用runner去比对会浪费性能，可以runner中的this指向_effect，这样可以更方便操作
 	//为此需要定义类型
 	const runner: Runner = _effect.run.bind(_effect) as Runner;
 	runner.effect = _effect;
