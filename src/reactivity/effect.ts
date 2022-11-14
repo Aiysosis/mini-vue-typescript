@@ -10,15 +10,16 @@ const targetMap: TargetMap = new WeakMap();
 let activeEffect: ReactiveEffect;
 let shouldTrack = false;
 
-class ReactiveEffect {
+export class ReactiveEffect {
 	private _fn: Function;
 	public scheduler?: Function;
 	public deps?: Dep[];
 	public active = true; //用于实现只stop一次
 	public onStop?: Function;
 
-	constructor(fn: Function) {
+	constructor(fn: Function, options?: EffectOpts) {
 		this._fn = fn;
+		extend(this, options);
 	}
 
 	run(this: ReactiveEffect) {
@@ -95,6 +96,7 @@ export const isTracking = () => activeEffect && shouldTrack;
  */
 export function trigger(target: object, key: string) {
 	let depsMap = targetMap.get(target);
+	if (!depsMap) return;
 	let dep = depsMap.get(key);
 	//如果有scheduler那么运行scheduler，否则运行run
 	triggerEffects(dep);
@@ -121,9 +123,7 @@ type Runner = {
 };
 
 export function effect(fn: Function, options: EffectOpts = {}) {
-	let _effect = new ReactiveEffect(fn);
-	//使用extend，同时设置了scheduler和onStop
-	extend(_effect, options);
+	let _effect = new ReactiveEffect(fn, options);
 	//直接用runner去比对会浪费性能，可以runner中的this指向_effect，这样可以更方便操作
 	//为此需要定义类型
 	const runner: Runner = _effect.run.bind(_effect) as Runner;
