@@ -4,7 +4,6 @@ import { reactive, toReactive } from "./reactive";
 
 interface Ref<T> {
 	value: T;
-	dep?: Dep;
 }
 
 class RefImpl<T> {
