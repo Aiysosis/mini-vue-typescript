@@ -37,6 +37,7 @@ function trackRefValue<T extends unknown>(ref: RefImpl<T>) {
 	}
 }
 
+//TODO ref的嵌套实现（需要将内层的ref变成普通对象/值）
 export function ref<T extends unknown>(raw: T): Ref<T> {
 	return new RefImpl(raw);
 }
