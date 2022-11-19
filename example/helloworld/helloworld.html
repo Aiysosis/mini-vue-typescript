@@ -22,42 +22,38 @@
 		// 	document.getElementById("#app")
 		// );
 
-		renderer.render({
-			type: "div",
-			props: {},
-			children: [
-				{
-					type: "h2",
-					props: {},
-					children: "hello h2",
-				},
-				{
-					type: "h3",
-					props: {},
-					children: "hello h3",
-				},
-				{
-					type: "li",
-					props: {},
-					children: [
-						{
-							type: "ol",
-							props: {},
-							children: "list test 1",
-						},
-						{
-							type: "ol",
-							props: {},
-							children: "list test 1",
-						},
-						{
-							type: "ol",
-							props: {},
-							children: "list test 1",
-						},
-					],
-				},
-			],
-		});
+		renderer.render(
+			{
+				type: "div",
+				children: [
+					{
+						type: "h2",
+						children: "hello h2",
+					},
+					{
+						type: "h3",
+						children: "hello h3",
+					},
+					{
+						type: "ol",
+						children: [
+							{
+								type: "li",
+								children: "list test 1",
+							},
+							{
+								type: "li",
+								children: "list test 1",
+							},
+							{
+								type: "li",
+								children: "list test 1",
+							},
+						],
+					},
+				],
+			},
+			document.getElementById("#app")
+		);
 	</script>
 </html>
