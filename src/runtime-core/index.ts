@@ -1,3 +1,5 @@
+//! 代码中带有 host前缀的表示平台相关的 类型/方法
+
 export interface VNode {
 	type: keyof HTMLElementTagNameMap;
 	props?: {
@@ -7,12 +9,17 @@ export interface VNode {
 }
 
 //为什么采用这么宽泛的类型？ 因为面向全平台，
-//所以Container的类型无法确定
-export type Container = {
+//所以RendererElement的类型无法确定
+export interface RendererNode {
 	[key: string]: any;
-};
+}
 
-export type RenderFn = (vnode: VNode | null, container: Container) => void;
+export interface RendererElement extends RendererNode {}
+
+export type RenderFn = (
+	vnode: VNode | null,
+	container: RendererElement
+) => void;
 
 export type Renderer = {
 	render: RenderFn;
@@ -21,34 +28,73 @@ export type Renderer = {
 export type PatchFn = (
 	n1: VNode | null, // null means mount
 	n2: VNode,
-	container: Container
+	container: RendererElement
 ) => void;
 
-export function createRenderer(): Renderer {
-	function mountElement(vnode: VNode, container: Container) {
-		const el = document.createElement(vnode.type);
-		//TODO process props
-		// if (vnode.props) {
-		// 	for (const key in vnode.props) {
-		// 		el.setAttribute(key, vnode[key]);
-		// 	}
-		// }
+//! 坑：patchProp !== patchProps，patchProps只是普通的逻辑抽离,不是options里面的东西
+//! 难怪要特意在前面加上 host前缀，有 host就代表平台相关
+export function createRenderer(options: RendererOptions): Renderer {
+	//解构赋值
+	const {
+		createElement: hostCreateElement,
+		setElementText: hostSetElementText,
+		patchProp: hostPatchProp,
+		insert: hostInsert,
+		remove: hostRemove,
+		setText: hostSetText,
+		createText: hostCreateText,
+	} = options;
+
+	function mountElement(vnode: VNode, container: RendererElement) {
+		//* -----------------------------------------以下为内部逻辑抽离-----------------------------------------
+		const patchProps = (el: RendererElement, key: string) => {
+			/*
+			 * props 可能有多种情况
+			 * 普通的键值对 id="app"
+			 * 只有键，不关心值 <buttn disabled/>
+			 * 只读 <input form="form1"/>
+			 * class 有可能传入的是对象 同时class有多种设置的方法，要选择性能最好的 el.className
+			 * //todo vue的绑定属性
+			 */
+			const type = typeof el[key];
+			const value = vnode.props[key];
+
+			if (shouldSetAsProps(el, key, value)) {
+				//要设置的属性是 DOM Properties
+				//? 例如 buttn 按钮的 disable
+				if (type === "boolean" && value === "") {
+					el[key] = true;
+				} else {
+					el[key] = value;
+				}
+			} else {
+				//设置的属性没有 DOM Properties, 使用 setAttribute
+				el.setAttribute(key, vnode[key]);
+			}
+		};
+
+		//* -------------------------------------------以下为主流程--------------------------------------------
+		const el = hostCreateElement(vnode.type);
+
+		if (vnode.props) {
+			for (const key in vnode.props) {
+				patchProps(el, key);
+			}
+		}
 
 		//* process children
 		if (typeof vnode.children === "string") {
-			//是叶子节点，其内部是普通文本
+			//child is plain text
 			el.innerHTML = vnode.children;
 		} else {
-			//还有嵌套的节点，递归执行
+			//child is vnode
 			vnode.children.forEach(node => {
-				//挂载位置为新创建的节点
 				mountElement(node, el);
 			});
 		}
 
-		//挂载
 		//* insert
-		container.appendChild(el);
+		hostInsert(el, container);
 	}
 
 	const patch: PatchFn = (n1, n2, container) => {
@@ -78,4 +124,34 @@ export function createRenderer(): Renderer {
 	return {
 		render,
 	};
+}
+
+function shouldSetAsProps(el: RendererElement, key: string, value: string) {
+	//特殊处理
+	if (key === "form" && el.tagName === "input") return false;
+	//兜底
+	return key in el;
+}
+
+//* 抽离出的平台无关的节点操作逻辑
+//* 这里的 元素（HostElement） 和 节点（HostNode）单从类型上来看好像没有任何区别，只是为了逻辑更清晰？
+//? 已经渲染的叫元素，未渲染的叫节点？
+//todo 弄清 HostElement 和 HostNode 之间的关系
+export interface RendererOptions<
+	HostNode = RendererNode,
+	HostElement = RendererElement
+> {
+	//只包含的部分，因为目标是实现一个最精简的核
+	patchProp(
+		el: HostElement,
+		key: string,
+		prevValue: any,
+		nextValue: any
+	): void; //* 处理 prop
+	insert(el: HostNode, parent: HostElement, anchor?: HostNode | null): void; //* 为某个元素添加子节点
+	remove(el: HostNode): void; //*
+	createElement(type: string): HostElement;
+	createText(text: string): HostNode;
+	setText(node: HostNode, text: string): void;
+	setElementText(node: HostElement, text: string): void;
 }

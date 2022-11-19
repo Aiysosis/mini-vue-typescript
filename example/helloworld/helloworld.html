@@ -13,21 +13,18 @@
 	<script>
 		const renderer = createRenderer();
 
-		// renderer.render(
-		// 	{
-		// 		type: "h1",
-		// 		props: {},
-		// 		children: "hello world",
-		// 	},
-		// 	document.getElementById("#app")
-		// );
-
 		renderer.render(
 			{
 				type: "div",
+				props: {
+					id: "justADiv",
+				},
 				children: [
 					{
 						type: "h2",
+						props: {
+							id: "hahaha",
+						},
 						children: "hello h2",
 					},
 					{
@@ -50,6 +47,22 @@
 								children: "list test 1",
 							},
 						],
+					},
+					{
+						type: "button",
+						props: {
+							id: "btn1",
+							disabled: "",
+						},
+						children: "don't click me",
+					},
+					{
+						type: "button",
+						props: {
+							id: "btn2",
+							disabled: false,
+						},
+						children: "click me",
 					},
 				],
 			},
