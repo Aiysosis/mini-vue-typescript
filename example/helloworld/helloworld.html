@@ -9,55 +9,5 @@
 	<body>
 		<div id="#app"></div>
 	</body>
-	<script src="../../lib/aiyso-vue.cjs.js"></script>
-	<script>
-		const renderer = createRenderer();
-
-		// renderer.render(
-		// 	{
-		// 		type: "h1",
-		// 		props: {},
-		// 		children: "hello world",
-		// 	},
-		// 	document.getElementById("#app")
-		// );
-
-		renderer.render({
-			type: "div",
-			props: {},
-			children: [
-				{
-					type: "h2",
-					props: {},
-					children: "hello h2",
-				},
-				{
-					type: "h3",
-					props: {},
-					children: "hello h3",
-				},
-				{
-					type: "li",
-					props: {},
-					children: [
-						{
-							type: "ol",
-							props: {},
-							children: "list test 1",
-						},
-						{
-							type: "ol",
-							props: {},
-							children: "list test 1",
-						},
-						{
-							type: "ol",
-							props: {},
-							children: "list test 1",
-						},
-					],
-				},
-			],
-		});
-	</script>
+	<script src="./main.js" type="module"></script>
 </html>
