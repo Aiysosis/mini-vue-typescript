@@ -1,7 +1,9 @@
 import { Component } from "./component";
+import { RendererElement } from "./renderer";
 
 export interface VNode {
 	type: string | Component;
+	el: RendererElement;
 	props?: Props;
 	children: string | VNode[];
 }
@@ -20,6 +22,7 @@ export function createVNode(
 		type,
 		props,
 		children,
+		el: null,
 	};
 	return vnode;
 }
