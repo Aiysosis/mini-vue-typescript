@@ -1,12 +1,20 @@
+import { Component } from "./component";
+
 export interface VNode {
-	type: string;
-	props?: {
-		[key: string]: string;
-	};
+	type: string | Component;
+	props?: Props;
 	children: string | VNode[];
 }
 
-export function createVNode(type, props?, children?) {
+type Props = {
+	[key: string]: string;
+};
+
+export function createVNode(
+	type: string | Component,
+	props?: Props,
+	children?: string | VNode[]
+): VNode {
 	//todo createVNode
 	const vnode = {
 		type,
@@ -15,3 +23,5 @@ export function createVNode(type, props?, children?) {
 	};
 	return vnode;
 }
+
+export const h = createVNode;
