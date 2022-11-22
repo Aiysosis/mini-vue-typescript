@@ -5,6 +5,8 @@ export const App = {
 		return h("div", "", "Hello vue");
 	},
 	setup() {
-		msg: "hello vue";
+		return {
+			msg: "hello vue",
+		};
 	},
 };
