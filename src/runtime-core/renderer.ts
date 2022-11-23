@@ -1,3 +1,4 @@
+import { isObject } from "@/shared/index";
 import {
 	ComponentInstance,
 	createComponentInstance,
@@ -5,6 +6,7 @@ import {
 } from "./component";
 import { VNode } from "./vnode";
 
+//+ 这种定义方式兼容了 null
 export interface RendererNode {
 	[key: string]: any;
 }
@@ -82,11 +84,14 @@ function createRenderer(options: RendererOptions) {
 		//* 分情况讨论
 		const type = typeof el[key];
 
+		//* 事件处理
 		//? 约定以 on开头的属性都视为事件（onclick,onMouseover...）
+		//? vue 中的 @click 之类的都是 onclick 的语法糖
 		if (/^on/.test(key)) {
 			//? 如果直接添加事件，删除事件会很麻烦，可以用一个变量把处理函数记录下来
 			const invokers = el._vei || (el._vei = {}); //* vue event invoker
 			const eventName = key.slice(2).toLowerCase();
+			//? invoker 自身是一个函数，但是它的value属性才是真正的事件处理函数，自己相当于proxy
 			let invoker = invokers[key];
 			if (nextValue) {
 				//* nextValue: Function | Function[]
@@ -94,6 +99,7 @@ function createRenderer(options: RendererOptions) {
 					//* 缓存
 					//invoker 是带有属性value的函数，它的value是缓存的事件处理函数
 					invoker = ((e: any) => {
+						//* 依次调用处理函数
 						if (Array.isArray(invoker.value)) {
 							for (const fn of invoker.value) {
 								fn(e);
@@ -109,12 +115,14 @@ function createRenderer(options: RendererOptions) {
 					el._vei = invokers;
 					el.addEventListener(eventName, invoker);
 				} else {
-					//* 有 invoker 直接更新
+					//* 有 invoker 直接覆盖原有的
 					invoker.value = nextValue;
 				}
 			} else if (invoker) {
 				//* 如果没有处理函数，且invoker存在，那么要清空
 				el.removeEventListener(eventName, invoker);
+				//bug 不一定正确
+				invokers[key] = undefined;
 			}
 		}
 		//? class 使用el.className 兼容 + 提速
@@ -155,32 +163,34 @@ function createRenderer(options: RendererOptions) {
 			n1 = null;
 		}
 
-		if (typeof n2.type === "object") {
+		if (typeof n2.type === "string") {
+			processElement(n1, n2, container);
+		} else if (isObject(n2.type)) {
 			processComponent(n1, n2, container);
 		} else {
-			processElement(n1, n2, container);
+			//todo 其他类型
 		}
 	};
 	function mountElement(vnode: VNode, container: RendererElement) {
+		//* create element
 		const el = hostCreateElement(vnode.type as string);
-		//* 引用实际的 dom 元素，用于后续的卸载操作
+		//* 引用实际的 dom 元素，用于后续的卸载操作 -> unmount
 		vnode.el = el;
 
-		//+ 本次流程不会涉及
-		// if (vnode.props) {
-		// 	for (const key in vnode.props) {
-		// 		patchProps(el, key, null, vnode.props[key]);
-		// 	}
-		// }
+		//* process props
+		if (vnode.props) {
+			for (const key in vnode.props) {
+				patchProps(el, key, null, vnode.props[key]);
+			}
+		}
 
 		//* process children
 		if (typeof vnode.children === "string") {
-			//* child is plain text
-			// el.innerHTML = vnode.children;
+			//* 直接更新文本内容
 			hostSetElementText(el, vnode.children);
 		} else {
 			//* child is vnode
-			//* 递归调用
+			//* 递归调用，以自己为挂载点
 			vnode.children.forEach(node => {
 				mountElement(node, el);
 			});
@@ -220,6 +230,7 @@ function createRenderer(options: RendererOptions) {
 	}
 	function unmount(vnode: VNode) {
 		//todo 调用声明周期函数 or 钩子函数
+		//todo 主要逻辑
 	}
 
 	const render: RenderFn = (vnode, container) => {
@@ -230,6 +241,9 @@ function createRenderer(options: RendererOptions) {
 			//* 没有 vnode，卸载节点
 			unmount(container._vnode);
 		}
+
+		//* 无论什么操作，都更新 _vnode
+		container._vnode = vnode;
 	};
 
 	return {
@@ -253,7 +267,7 @@ const domInterfaceImplement: RendererOptions<DomNode, DomElement> = {
 	},
 	setText(node, text) {},
 	setElementText(node, text) {
-		node.innerHTML = text;
+		node.textContent = text;
 	},
 };
 

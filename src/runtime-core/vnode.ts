@@ -9,7 +9,7 @@ export interface VNode {
 }
 
 type Props = {
-	[key: string]: string;
+	[key: string]: string | Function | Function[];
 };
 
 export function createVNode(
