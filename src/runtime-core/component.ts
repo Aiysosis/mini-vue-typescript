@@ -34,7 +34,9 @@ export function setupStatefulComponent(instance: ComponentInstance) {
 	const ctx = {};
 	instance.proxy = new Proxy(ctx, {
 		get(target, key) {
-			if (key in instance.setupState) {
+			if (key === "$el") {
+				return instance.vnode.el;
+			} else if (key in instance.setupState) {
 				return instance.setupState[key];
 			}
 		},

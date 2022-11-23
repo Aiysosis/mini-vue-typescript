@@ -1,4 +1,5 @@
 import { isObject } from "@/shared/index";
+import { ShapeFlags } from "@/shared/shapeFlags";
 import {
 	ComponentInstance,
 	createComponentInstance,
@@ -163,9 +164,9 @@ function createRenderer(options: RendererOptions) {
 			n1 = null;
 		}
 
-		if (typeof n2.type === "string") {
+		if ((n2.shapeFlag & ShapeFlags.ELEMENT) > 0) {
 			processElement(n1, n2, container);
-		} else if (isObject(n2.type)) {
+		} else if ((n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) > 0) {
 			processComponent(n1, n2, container);
 		} else {
 			//todo 其他类型
@@ -174,7 +175,7 @@ function createRenderer(options: RendererOptions) {
 	function mountElement(vnode: VNode, container: RendererElement) {
 		//* create element
 		const el = hostCreateElement(vnode.type as string);
-		//* 引用实际的 dom 元素，用于后续的卸载操作 -> unmount
+		//* 引用实际的 dom 元素，用于后续的卸载操作 -> unmount, 以及组件的 this.$el
 		vnode.el = el;
 
 		//* process props
@@ -185,13 +186,13 @@ function createRenderer(options: RendererOptions) {
 		}
 
 		//* process children
-		if (typeof vnode.children === "string") {
+		if ((vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) > 0) {
 			//* 直接更新文本内容
-			hostSetElementText(el, vnode.children);
+			hostSetElementText(el, vnode.children as string);
 		} else {
 			//* child is vnode
 			//* 递归调用，以自己为挂载点
-			vnode.children.forEach(node => {
+			(vnode.children as VNode[]).forEach(node => {
 				mountElement(node, el);
 			});
 		}
@@ -215,18 +216,22 @@ function createRenderer(options: RendererOptions) {
 	function mountComponent(vnode: VNode, container: RendererElement) {
 		const instance = createComponentInstance(vnode);
 
-		//+ 这一步初始化了Props，slots，setup函数，
-		//+ instance 多了两个属性：setupState(setup函数的返回值),render(组件的 render函数)
+		//* 这一步初始化了Props，slots，setup函数，
+		//* component proxy
 		setupComponent(instance);
 
+		//* 真正的渲染
 		setupRenderEffect(instance, container);
 	}
 	function setupRenderEffect(
 		instance: ComponentInstance,
 		container: RendererElement
 	) {
+		//* 调用组件的render函数以获取vnode，然后挂载
 		const subTree = instance.render();
 		patch(null, subTree, container);
+		//* 这一步很关键，patch中设置的 el是为subTree节点设置的，这里还要再次赋值
+		instance.vnode.el = subTree.el;
 	}
 	function unmount(vnode: VNode) {
 		//todo 调用声明周期函数 or 钩子函数

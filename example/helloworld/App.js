@@ -8,7 +8,7 @@ export const App = {
 				{
 					class: "red",
 					onclick: () => {
-						alert("whassup man?");
+						alert(this.$el);
 					},
 				},
 				"Hello"
