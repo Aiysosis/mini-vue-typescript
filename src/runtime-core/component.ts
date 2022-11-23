@@ -1,4 +1,4 @@
-import { VNode } from "./vnode";
+import { createVNode, VNode } from "./vnode";
 
 export type Component = {
 	name?: string;
@@ -8,6 +8,8 @@ export type Component = {
 
 export type ComponentInstance = {
 	vnode: VNode;
+	type: Component;
+	proxy?: object;
 	render?: () => VNode;
 	setupState?: object;
 };
@@ -15,6 +17,7 @@ export type ComponentInstance = {
 export function createComponentInstance(vnode: VNode): ComponentInstance {
 	return {
 		vnode,
+		type: vnode.type as Component,
 	};
 }
 
@@ -25,9 +28,21 @@ export function setupComponent(instance: ComponentInstance) {
 }
 
 export function setupStatefulComponent(instance: ComponentInstance) {
-	const { setup } = instance.vnode.type as Component;
-	if (setup) {
-		const setupResult = setup();
+	const component = instance.type;
+
+	//*创建 proxy
+	const ctx = {};
+	instance.proxy = new Proxy(ctx, {
+		get(target, key) {
+			if (key in instance.setupState) {
+				return instance.setupState[key];
+			}
+		},
+	});
+
+	//* 处理 setup函数
+	if (component.setup) {
+		const setupResult = component.setup();
 
 		handleSetupResult(instance, setupResult);
 	}
@@ -48,9 +63,9 @@ export function handleSetupResult(
 }
 
 function finishComponentSetup(instance: ComponentInstance) {
-	const component = instance.vnode.type as Component;
+	const component = instance.type;
 	const render = component.render;
 	if (render) {
-		instance.render = render;
+		instance.render = render.bind(instance.proxy);
 	}
 }

@@ -18,13 +18,13 @@ export const App = {
 				{
 					class: "blue",
 				},
-				"vue"
+				this.msg
 			),
 		]);
 	},
 	setup() {
 		return {
-			msg: "hello vue",
+			msg: "yes",
 		};
 	},
 };
