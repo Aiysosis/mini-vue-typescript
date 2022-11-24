@@ -1,3 +1,4 @@
+import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 import { createVNode, VNode } from "./vnode";
 
 export type Component = {
@@ -31,16 +32,8 @@ export function setupStatefulComponent(instance: ComponentInstance) {
 	const component = instance.type;
 
 	//*创建 proxy
-	const ctx = {};
-	instance.proxy = new Proxy(ctx, {
-		get(target, key) {
-			if (key === "$el") {
-				return instance.vnode.el;
-			} else if (key in instance.setupState) {
-				return instance.setupState[key];
-			}
-		},
-	});
+	const ctx = { _: instance };
+	instance.proxy = new Proxy(ctx, PublicInstanceProxyHandlers);
 
 	//* 处理 setup函数
 	if (component.setup) {
@@ -68,6 +61,7 @@ function finishComponentSetup(instance: ComponentInstance) {
 	const component = instance.type;
 	const render = component.render;
 	if (render) {
+		//* 绑定 this
 		instance.render = render.bind(instance.proxy);
 	}
 }

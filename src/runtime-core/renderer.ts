@@ -234,7 +234,7 @@ function createRenderer(options: RendererOptions) {
 		instance.vnode.el = subTree.el;
 	}
 	function unmount(vnode: VNode) {
-		//todo 调用声明周期函数 or 钩子函数
+		//todo 调用生命周期函数 or 钩子函数
 		//todo 主要逻辑
 	}
 
