@@ -189,11 +189,12 @@ function createRenderer(options: RendererOptions) {
 		if ((vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) > 0) {
 			//* 直接更新文本内容
 			hostSetElementText(el, vnode.children as string);
-		} else {
+		} else if (vnode.children) {
 			//* child is vnode
 			//* 递归调用，以自己为挂载点
 			(vnode.children as VNode[]).forEach(node => {
-				mountElement(node, el);
+				//* child 也可能是组件，所以重新调用 patch
+				patch(null, node, container);
 			});
 		}
 

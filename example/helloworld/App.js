@@ -1,5 +1,6 @@
 //? App是一个组件
 import { h } from "../../lib/aiyso-vue.esm.js";
+import { Foo } from "./Foo.js";
 export const App = {
 	render() {
 		return h("div", { class: "container" }, [
@@ -20,6 +21,9 @@ export const App = {
 				},
 				this.msg
 			),
+			h(Foo, {
+				count: 1,
+			}),
 		]);
 	},
 	setup() {
