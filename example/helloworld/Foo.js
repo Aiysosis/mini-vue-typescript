@@ -10,6 +10,7 @@ import { h } from "../../lib/aiyso-vue.esm.js";
 export const Foo = {
 	setup(props) {
 		console.log(props);
+		props.count++;
 	},
 	render() {
 		return h("h2", {}, `count: ${this.count}`);

@@ -47,7 +47,7 @@ export const readonlyHandlers: ProxyHandler<object> = {
 	get: readonlyGet,
 	set(target, key: string) {
 		console.warn(
-			`key${key} is not assignable because it's readonly`,
+			`key[${key}] is not assignable because it's readonly`,
 			target
 		);
 		return true;

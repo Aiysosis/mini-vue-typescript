@@ -10,7 +10,7 @@ export interface VNode {
 	shapeFlag: number;
 }
 
-type Props = {
+export type Props = {
 	[key: string]: string | Function | Function[];
 };
 

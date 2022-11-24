@@ -15,20 +15,29 @@ export const publicProprietiesMap: PublicPropertiesMap = {
 	$el: (i: I) => i.vnode.el,
 };
 
+export const hasOwn = (obj, key) =>
+	obj && Object.prototype.hasOwnProperty.apply(obj, [key]);
+
 export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
-	get(target: ComponentRenderContext, key: string) {
+	get({ _: instance }: ComponentRenderContext, key: string) {
 		//* target是ctx，它的 _ 属性是instance，使用解构赋值然后重命名
-		const { _: instance } = target;
+
+		const { setupState, props } = instance;
+
+		if (hasOwn(setupState, key)) {
+			return setupState[key];
+		}
+
+		if (hasOwn(props, key)) {
+			return props[key];
+		}
+
 		const getter = publicProprietiesMap[key];
 		if (getter) {
 			return getter(instance);
-		} else if (
-			instance.setupState &&
-			instance.setupState.hasOwnProperty(key)
-		) {
-			return instance.setupState[key];
-		} else {
-			return undefined;
 		}
+
+		//* 兜底
+		return undefined;
 	},
 };
