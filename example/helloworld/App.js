@@ -28,7 +28,7 @@ export const App = {
 	},
 	setup() {
 		return {
-			msg: "yes",
+			msg: "vue",
 		};
 	},
 };

@@ -1,29 +1,40 @@
 import { shallowReadonly } from "@/reactivity/reactive";
 import { extend } from "@/shared/index";
+import { emit } from "./componentEmits";
 import { initProps } from "./componentProps";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 import { createVNode, Props, VNode } from "./vnode";
 
 export type Component = {
 	name?: string;
-	setup?: (props?: Props) => object | Function;
+	setup?: (
+		props?: Props,
+		emitsObject?: { emit: Function }
+	) => object | Function;
 	render: () => VNode;
 };
 
 export type ComponentInstance = {
 	vnode: VNode;
 	type: Component;
-	props?: Props;
+	emit: Function;
+	props: Props;
 	proxy?: object;
 	render?: () => VNode;
 	setupState?: object;
 };
 
 export function createComponentInstance(vnode: VNode): ComponentInstance {
-	return {
+	const instance: ComponentInstance = {
 		vnode,
 		type: vnode.type as Component,
+		props: {},
+		setupState: {},
+		emit: () => {},
 	};
+	//* 这里用了一个小 trick ，使用 bind函数来提前输入一些内部的参数，这样用户调用的时候就轻松很多
+	instance.emit = emit.bind(null, instance);
+	return instance;
 }
 
 export function setupComponent(instance: ComponentInstance) {
@@ -41,7 +52,9 @@ export function setupStatefulComponent(instance: ComponentInstance) {
 
 	//* 处理 setup函数
 	if (component.setup) {
-		const setupResult = component.setup(shallowReadonly(instance.props));
+		const setupResult = component.setup(shallowReadonly(instance.props), {
+			emit: instance.emit,
+		});
 
 		handleSetupResult(instance, setupResult);
 	}

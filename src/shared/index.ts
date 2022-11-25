@@ -29,3 +29,33 @@ export const toTypeString = (value: unknown): string =>
 
 export const hasChanged = (newValue: any, oldValue: any) =>
 	!Object.is(newValue, oldValue);
+
+/**
+ * 首字母大写
+ * @param str
+ * @returns
+ */
+export const captalize = (str: string) => {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * foo -> onFoo
+ * foo-bar -> onFooBar
+ * @param str
+ * @returns
+ */
+export const toHandlerKey = (str: string) => {
+	return str ? "on" + captalize(str) : "";
+};
+
+/**
+ * 烤肉串转驼峰
+ * @param str
+ * @returns
+ */
+export const camelize = (str: string) => {
+	return str.replace(/-(\w)/g, (_, c: string) => {
+		return c ? c.toUpperCase() : "";
+	});
+};
