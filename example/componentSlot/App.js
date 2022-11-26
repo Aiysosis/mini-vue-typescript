@@ -9,8 +9,9 @@ export const App = {
 			Foo,
 			{},
 			{
-				header: h("p", {}, "this is header"),
-				footer: h("p", {}, "this is footer"),
+				//* 参数要采用解构赋值
+				header: ({ name }) => h("p", {}, "this is header " + name),
+				footer: () => h("p", {}, "this is footer"),
 			}
 		);
 

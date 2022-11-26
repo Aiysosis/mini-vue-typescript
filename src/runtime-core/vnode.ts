@@ -1,10 +1,10 @@
 import { isArray, isObject, isString } from "@/shared/index";
 import { ShapeFlags } from "@/shared/shapeFlags";
 import { Component } from "./component";
-import { Slots } from "./componentSlots";
+import { RawSlots } from "./componentSlots";
 import { RendererElement } from "./renderer";
 
-export type VNodeChildren = string | VNode[] | Slots | null;
+export type VNodeChildren = string | VNode[] | RawSlots | null;
 
 export interface VNode {
 	type: string | Component;

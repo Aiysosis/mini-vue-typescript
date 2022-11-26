@@ -3,7 +3,7 @@ import { extend } from "@/shared/index";
 import { emit } from "./componentEmits";
 import { initProps } from "./componentProps";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
-import { initSlots, Slots } from "./componentSlots";
+import { initSlots, InternalSlots } from "./componentSlots";
 import { createVNode, Props, VNode } from "./vnode";
 
 export type Component = {
@@ -20,7 +20,7 @@ export type ComponentInstance = {
 	type: Component;
 	emit: Function;
 	props: Props;
-	slots: Slots;
+	slots: InternalSlots;
 	proxy?: ComponentInstance;
 	render?: () => VNode;
 	setupState?: object;
