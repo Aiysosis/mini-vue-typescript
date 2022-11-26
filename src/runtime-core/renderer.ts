@@ -5,7 +5,7 @@ import {
 	createComponentInstance,
 	setupComponent,
 } from "./component";
-import { VNode } from "./vnode";
+import { Fragment, VNode, Text } from "./vnode";
 
 //+ 这种定义方式兼容了 null
 export interface RendererNode {
@@ -156,6 +156,24 @@ function createRenderer(options: RendererOptions) {
 		}
 	}
 
+	function processFragment(
+		n1: VNode | null,
+		n2: VNode,
+		container: RendererElement
+	) {
+		if (!n1) {
+			mountChildren(n2, container);
+		} else {
+			//todo update element
+		}
+	}
+
+	function processText(
+		n1: VNode | null,
+		n2: VNode,
+		container: RendererElement
+	) {}
+
 	const patch: PatchFn = (n1, n2, container) => {
 		//* 两种情况：挂载元素（其实就是第一次patch），更新元素（patch）
 		//* 如果新旧的 tagName 不一样，那么直接卸载旧的，然后挂新的上去
@@ -164,42 +182,63 @@ function createRenderer(options: RendererOptions) {
 			n1 = null;
 		}
 
-		if (n2.shapeFlag & ShapeFlags.ELEMENT) {
-			processElement(n1, n2, container);
-		} else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-			processComponent(n1, n2, container);
-		} else {
-			//todo 其他类型
+		const { type } = n2;
+		switch (type) {
+			//* Fragment 类型，只有children
+			case Fragment:
+				processFragment(n1, n2, container);
+				break;
+			case Text:
+				processText(n1, n2, container);
+				break;
+			default:
+				if (n2.shapeFlag & ShapeFlags.ELEMENT) {
+					processElement(n1, n2, container);
+				} else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+					processComponent(n1, n2, container);
+				} else {
+					//todo 其他类型
+				}
 		}
 	};
 	function mountElement(vnode: VNode, container: RendererElement) {
 		//* create element
-		const el = hostCreateElement(vnode.type as string);
+		const { type, shapeFlag, props, children } = vnode;
+		const el = hostCreateElement(type as string);
 		//* 引用实际的 dom 元素，用于后续的卸载操作 -> unmount, 以及组件的 this.$el
 		vnode.el = el;
 
 		//* process props
-		if (vnode.props) {
-			for (const key in vnode.props) {
-				patchProps(el, key, null, vnode.props[key]);
+		if (props) {
+			for (const key in props) {
+				patchProps(el, key, null, props[key]);
 			}
 		}
 
 		//* process children
-		if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+		if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
 			//* 直接更新文本内容
-			hostSetElementText(el, vnode.children as string);
-		} else if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+			hostSetElementText(el, children as string);
+		} else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
 			//* child is vnode
 			//* 递归调用，以自己为挂载点
-			(vnode.children as VNode[]).forEach(node => {
-				//* child 也可能是组件，所以重新调用 patch
-				patch(null, node, el);
-			});
+			mountChildren(vnode, el);
+			// (children as VNode[]).forEach(node => {
+			// 	//* child 也可能是组件，所以重新调用 patch
+			// 	patch(null, node, el);
+			// });
 		}
 		//* insert
 		hostInsert(el, container);
 	}
+
+	function mountChildren(vnode: VNode, container: RendererElement) {
+		const children = vnode.children as VNode[];
+		children.forEach(node => {
+			patch(null, node, container);
+		});
+	}
+
 	function processComponent(
 		n1: VNode | null,
 		n2: VNode,

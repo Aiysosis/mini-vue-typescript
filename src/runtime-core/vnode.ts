@@ -6,8 +6,11 @@ import { RendererElement } from "./renderer";
 
 export type VNodeChildren = string | VNode[] | RawSlots | null;
 
+export const Fragment = Symbol("Fragment");
+export const Text = Symbol("Text");
+
 export interface VNode {
-	type: string | Component;
+	type: string | Component | Symbol;
 	el: RendererElement;
 	props: Props | null;
 	children: VNodeChildren;
@@ -19,7 +22,7 @@ export type Props = {
 };
 
 export function createVNode(
-	type: string | Component,
+	type: string | Component | Symbol,
 	props: Props | null = null,
 	children: VNodeChildren = null
 ): VNode {
