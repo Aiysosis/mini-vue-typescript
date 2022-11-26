@@ -12,7 +12,8 @@ export interface ComponentRenderContext {
 
 //* 新增的属性修改这里即可
 export const publicProprietiesMap: PublicPropertiesMap = {
-	$el: (i: I) => i.vnode.el,
+	$el: i => i.vnode.el,
+	$slots: i => i.slots,
 };
 
 export const hasOwn = (obj, key) =>

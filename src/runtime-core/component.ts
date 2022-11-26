@@ -3,6 +3,7 @@ import { extend } from "@/shared/index";
 import { emit } from "./componentEmits";
 import { initProps } from "./componentProps";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
+import { initSlots, Slots } from "./componentSlots";
 import { createVNode, Props, VNode } from "./vnode";
 
 export type Component = {
@@ -19,7 +20,8 @@ export type ComponentInstance = {
 	type: Component;
 	emit: Function;
 	props: Props;
-	proxy?: object;
+	slots: Slots;
+	proxy?: ComponentInstance;
 	render?: () => VNode;
 	setupState?: object;
 };
@@ -31,6 +33,7 @@ export function createComponentInstance(vnode: VNode): ComponentInstance {
 		props: {},
 		setupState: {},
 		emit: () => {},
+		slots: {},
 	};
 	//* 这里用了一个小 trick ，使用 bind函数来提前输入一些内部的参数，这样用户调用的时候就轻松很多
 	instance.emit = emit.bind(null, instance);
@@ -39,7 +42,7 @@ export function createComponentInstance(vnode: VNode): ComponentInstance {
 
 export function setupComponent(instance: ComponentInstance) {
 	initProps(instance);
-	//todo initSlots();
+	initSlots(instance);
 	setupStatefulComponent(instance);
 }
 

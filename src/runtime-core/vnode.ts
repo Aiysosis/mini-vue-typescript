@@ -1,12 +1,16 @@
+import { isArray, isObject, isString } from "@/shared/index";
 import { ShapeFlags } from "@/shared/shapeFlags";
 import { Component } from "./component";
+import { Slots } from "./componentSlots";
 import { RendererElement } from "./renderer";
+
+export type VNodeChildren = string | VNode[] | Slots | null;
 
 export interface VNode {
 	type: string | Component;
 	el: RendererElement;
-	props?: Props;
-	children: string | VNode[];
+	props: Props | null;
+	children: VNodeChildren;
 	shapeFlag: number;
 }
 
@@ -16,8 +20,8 @@ export type Props = {
 
 export function createVNode(
 	type: string | Component,
-	props?: Props,
-	children?: string | VNode[]
+	props: Props | null = null,
+	children: VNodeChildren = null
 ): VNode {
 	//todo createVNode
 	const vnode = {
@@ -27,10 +31,15 @@ export function createVNode(
 		el: null,
 		shapeFlag: initShapeFlag(type),
 	};
-	if (typeof children === "string") {
-		vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;
-	} else {
-		vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
+
+	if (children) {
+		vnode.shapeFlag |= isString(children)
+			? ShapeFlags.TEXT_CHILDREN
+			: isArray(children)
+			? ShapeFlags.ARRAY_CHILDREN
+			: isObject(children)
+			? ShapeFlags.SLOTS_CHILDREN
+			: 0;
 	}
 
 	return vnode;

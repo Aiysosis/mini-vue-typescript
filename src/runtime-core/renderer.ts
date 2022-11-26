@@ -164,9 +164,9 @@ function createRenderer(options: RendererOptions) {
 			n1 = null;
 		}
 
-		if ((n2.shapeFlag & ShapeFlags.ELEMENT) > 0) {
+		if (n2.shapeFlag & ShapeFlags.ELEMENT) {
 			processElement(n1, n2, container);
-		} else if ((n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) > 0) {
+		} else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
 			processComponent(n1, n2, container);
 		} else {
 			//todo 其他类型
@@ -186,18 +186,17 @@ function createRenderer(options: RendererOptions) {
 		}
 
 		//* process children
-		if ((vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) > 0) {
+		if (vnode.shapeFlag & ShapeFlags.TEXT_CHILDREN) {
 			//* 直接更新文本内容
 			hostSetElementText(el, vnode.children as string);
-		} else if (vnode.children) {
+		} else if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
 			//* child is vnode
 			//* 递归调用，以自己为挂载点
 			(vnode.children as VNode[]).forEach(node => {
 				//* child 也可能是组件，所以重新调用 patch
-				patch(null, node, container);
+				patch(null, node, el);
 			});
 		}
-
 		//* insert
 		hostInsert(el, container);
 	}
