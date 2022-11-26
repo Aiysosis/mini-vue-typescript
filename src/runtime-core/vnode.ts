@@ -57,3 +57,7 @@ function initShapeFlag(type: any) {
 }
 
 export const h = createVNode;
+
+export function createTextVNode(text: string) {
+	return createVNode(Text, {}, text);
+}

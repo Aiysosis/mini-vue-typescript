@@ -172,7 +172,15 @@ function createRenderer(options: RendererOptions) {
 		n1: VNode | null,
 		n2: VNode,
 		container: RendererElement
-	) {}
+	) {
+		if (!n1) {
+			const children = n2.children as string;
+			const textNode = (n2.el = hostCreateText(children));
+			hostInsert(textNode, container);
+		} else {
+			//todo update element
+		}
+	}
 
 	const patch: PatchFn = (n1, n2, container) => {
 		//* 两种情况：挂载元素（其实就是第一次patch），更新元素（patch）
@@ -307,7 +315,7 @@ const domInterfaceImplement: RendererOptions<DomNode, DomElement> = {
 		return document.createElement(type);
 	},
 	createText(text) {
-		return {};
+		return document.createTextNode(text);
 	},
 	setText(node, text) {},
 	setElementText(node, text) {

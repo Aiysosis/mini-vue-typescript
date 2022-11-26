@@ -1,5 +1,5 @@
 //? App是一个组件
-import { h } from "../../lib/aiyso-vue.esm.js";
+import { h, createTextVNode } from "../../lib/aiyso-vue.esm.js";
 import { Foo } from "./Foo.js";
 export const App = {
 	render() {
@@ -10,7 +10,10 @@ export const App = {
 			{},
 			{
 				//* 参数要采用解构赋值
-				header: ({ name }) => h("p", {}, "this is header " + name),
+				header: ({ name }) => [
+					h("p", {}, "this is header " + name),
+					createTextVNode("你好呀"),
+				],
 				footer: () => h("p", {}, "this is footer"),
 			}
 		);
