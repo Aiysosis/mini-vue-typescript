@@ -55,9 +55,12 @@ export function setupStatefulComponent(instance: ComponentInstance) {
 
 	//* 处理 setup函数
 	if (component.setup) {
+		//* currentInstance 只在setup函数调用的时候可以被读取
+		setCurrentInstance(instance);
 		const setupResult = component.setup(shallowReadonly(instance.props), {
 			emit: instance.emit,
 		});
+		setCurrentInstance(null);
 
 		handleSetupResult(instance, setupResult);
 	}
@@ -85,4 +88,14 @@ function finishComponentSetup(instance: ComponentInstance) {
 		//* 绑定 this
 		instance.render = render.bind(instance.proxy);
 	}
+}
+
+let currentInstance: ComponentInstance = null;
+
+export function getCurrentInstance() {
+	return currentInstance;
+}
+
+function setCurrentInstance(instance: ComponentInstance | null) {
+	currentInstance = instance;
 }
