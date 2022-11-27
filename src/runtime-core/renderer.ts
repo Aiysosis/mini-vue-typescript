@@ -5,6 +5,7 @@ import {
 	createComponentInstance,
 	setupComponent,
 } from "./component";
+import { createAppAPI } from "./createApp";
 import { Fragment, VNode, Text } from "./vnode";
 
 //+ 这种定义方式兼容了 null
@@ -56,7 +57,7 @@ export interface RendererOptions<
 	setElementText(node: HostElement, text: string): void;
 }
 
-function createRenderer(options: RendererOptions) {
+export function createRenderer(options: RendererOptions) {
 	const {
 		patchProp: hostPatchProp,
 		insert: hostInsert,
@@ -299,28 +300,6 @@ function createRenderer(options: RendererOptions) {
 	};
 
 	return {
-		render,
+		createApp: createAppAPI(render),
 	};
 }
-
-type DomElement = Element;
-type DomNode = RendererNode;
-const domInterfaceImplement: RendererOptions<DomNode, DomElement> = {
-	patchProp(el, key, prevValue, nextValue) {},
-	insert(el, parent, anchor?) {
-		parent.appendChild(el as Node);
-	},
-	remove(el) {},
-	createElement(type) {
-		return document.createElement(type);
-	},
-	createText(text) {
-		return document.createTextNode(text);
-	},
-	setText(node, text) {},
-	setElementText(node, text) {
-		node.textContent = text;
-	},
-};
-
-export const renderer = createRenderer(domInterfaceImplement);
