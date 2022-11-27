@@ -1,5 +1,6 @@
 import { isObject } from "@/shared/index";
 import { ShapeFlags } from "@/shared/shapeFlags";
+import { effect } from "../reactivity/index";
 import {
 	ComponentInstance,
 	createComponentInstance,
@@ -253,11 +254,11 @@ export function createRenderer(options: RendererOptions) {
 		n2: VNode,
 		container: RendererElement
 	) {
-		if (!n1) {
+		if (n1 === null) {
 			mountComponent(n2, container);
 		} else {
 			//+ 本次流程不会涉及
-			// patchComponent(n1, n2, container);
+			patchComponent(n1, n2, container);
 		}
 	}
 	// 组件挂载
@@ -268,9 +269,10 @@ export function createRenderer(options: RendererOptions) {
 		//* component proxy
 		setupComponent(instance);
 
-		//* 真正的渲染
+		//* 真正的渲染 + effect
 		setupRenderEffect(instance, container);
 	}
+	//+ 在这里使用 effect
 	function setupRenderEffect(
 		instance: ComponentInstance,
 		container: RendererElement
@@ -280,7 +282,12 @@ export function createRenderer(options: RendererOptions) {
 		patch(null, subTree, container);
 		//* 这一步很关键，patch中设置的 el是为subTree节点设置的，这里还要再次赋值
 		instance.vnode.el = subTree.el;
+		instance.isMounted = true;
 	}
+	function patchComponent(n1: VNode, n2: VNode, container: RendererElement) {
+		console.log("update");
+	}
+
 	function unmount(vnode: VNode) {
 		//todo 调用生命周期函数 or 钩子函数
 		//todo 主要逻辑

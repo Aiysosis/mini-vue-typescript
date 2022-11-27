@@ -1,5 +1,6 @@
 import { shallowReadonly } from "@/reactivity/reactive";
 import { extend } from "@/shared/index";
+import { proxyRefs } from "../reactivity/index";
 import { emit } from "./componentEmits";
 import { initProps } from "./componentProps";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
@@ -21,6 +22,7 @@ export type ComponentInstance = {
 	emit: Function;
 	props: Props;
 	slots: InternalSlots;
+	isMounted: boolean;
 	proxy?: ComponentInstance;
 	render?: () => VNode;
 	setupState?: object;
@@ -34,6 +36,7 @@ export function createComponentInstance(vnode: VNode): ComponentInstance {
 		setupState: {},
 		emit: () => {},
 		slots: {},
+		isMounted: false,
 	};
 	//* 这里用了一个小 trick ，使用 bind函数来提前输入一些内部的参数，这样用户调用的时候就轻松很多
 	instance.emit = emit.bind(null, instance);
@@ -70,7 +73,7 @@ export function handleSetupResult(
 	setupResult: object | Function
 ) {
 	if (typeof setupResult === "object") {
-		instance.setupState = setupResult;
+		instance.setupState = proxyRefs(setupResult);
 		//extends(setupResult,instance.props)
 	} else {
 		//todo setupResult as Function
