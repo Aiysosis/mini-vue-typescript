@@ -1,5 +1,5 @@
 import { effect } from "@/reactivity/effect";
-import { isObject } from "@/shared/index";
+import { EMPTY_OBJ, isObject } from "@/shared/index";
 import { ShapeFlags } from "@/shared/shapeFlags";
 
 import {
@@ -75,35 +75,21 @@ export function createRenderer(options: RendererOptions) {
 		el: RendererElement,
 		// key: string,
 		vnode: VNode,
-		oldProps: Props | null,
-		newProps: Props | null
+		oldProps: Props,
+		newProps: Props
 	) => {
-		//* 逻辑比较复杂：oldProps 和 newProps 都可能为 null
-		//! 一个知识点： null is iterable, 但是无法访问其任何属性
 		if (oldProps !== newProps) {
-			if (oldProps === null) {
-				//* delete all props
-				console.log("[patchProps]: oldProps is null");
-				for (const key in newProps) {
-					hostPatchProp(el, key, null, newProps[key]);
-				}
-			} else if (newProps === null) {
-				for (const key in oldProps) {
-					//全部删除
+			console.log("[patchProps]: update", newProps);
+			for (const key in newProps) {
+				const oldValue = oldProps[key];
+				const newValue = newProps[key];
+				console.log(oldValue, newValue);
+				hostPatchProp(el, key, oldValue, newValue);
+			}
+			//* 少的属性要进行删除
+			for (const key in oldProps) {
+				if (!(key in newProps)) {
 					hostPatchProp(el, key, oldProps[key], null);
-				}
-			} else {
-				console.log("[patchProps]: update", newProps);
-				for (const key in newProps) {
-					const oldValue = oldProps[key];
-					const newValue = newProps[key];
-					console.log(oldValue, newValue);
-					hostPatchProp(el, key, oldValue, newValue);
-				}
-				for (const key in oldProps) {
-					if (!(key in newProps)) {
-						hostPatchProp(el, key, oldProps[key], null);
-					}
 				}
 			}
 		}
@@ -128,8 +114,8 @@ export function createRenderer(options: RendererOptions) {
 		//! 重要的细节：n2 上此时是没有el的
 		const el = (n2.el = n1.el);
 
-		const oldProps = n1.props;
-		const newProps = n2.props;
+		const oldProps = n1.props || EMPTY_OBJ;
+		const newProps = n2.props || EMPTY_OBJ;
 		patchProps(el, n2, oldProps, newProps);
 	}
 
@@ -195,7 +181,7 @@ export function createRenderer(options: RendererOptions) {
 
 		//* process props
 		if (props) {
-			patchProps(el, vnode, null, props);
+			patchProps(el, vnode, EMPTY_OBJ, props);
 		}
 
 		//* process children
