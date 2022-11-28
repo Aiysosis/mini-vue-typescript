@@ -1,6 +1,7 @@
+import { effect } from "@/reactivity/effect";
 import { isObject } from "@/shared/index";
 import { ShapeFlags } from "@/shared/shapeFlags";
-import { effect } from "../reactivity/index";
+
 import {
 	ComponentInstance,
 	createComponentInstance,
@@ -155,7 +156,12 @@ export function createRenderer(options: RendererOptions) {
 			mountElement(n2, container);
 		} else {
 			//todo update element
+			patchElement(n1, n2, container);
 		}
+	}
+
+	function patchElement(n1: VNode, n2: VNode, container: RendererElement) {
+		console.log("[patchElement]: patch");
 	}
 
 	function processFragment(
@@ -277,15 +283,28 @@ export function createRenderer(options: RendererOptions) {
 		instance: ComponentInstance,
 		container: RendererElement
 	) {
-		//* 调用组件的render函数以获取vnode，然后挂载
-		const subTree = instance.render();
-		patch(null, subTree, container);
-		//* 这一步很关键，patch中设置的 el是为subTree节点设置的，这里还要再次赋值
-		instance.vnode.el = subTree.el;
-		instance.isMounted = true;
+		effect(() => {
+			//* 调用组件的render函数以获取vnode，然后挂载
+			if (!instance.isMounted) {
+				const subTree = (instance.subTree = instance.render());
+				patch(null, subTree, container);
+				//* 这一步很关键，patch中设置的 el是为subTree节点设置的，这里还要再次赋值
+				instance.vnode.el = subTree.el;
+				instance.isMounted = true;
+			} else {
+				console.log("[setupRenderEffect]: update");
+				//* 拿到新的 subtree
+				//* 这里是由 effect触发的，而 proxy的绑定在setupComponent中，所以需要再次绑定
+				const subTree = instance.render.call(instance.proxy);
+				const prevSubTree = instance.subTree;
+				console.log("prev: ", prevSubTree);
+				console.log("current", subTree);
+				patch(prevSubTree, subTree, container);
+			}
+		});
 	}
 	function patchComponent(n1: VNode, n2: VNode, container: RendererElement) {
-		console.log("update");
+		console.log("[Patch component]: patch");
 	}
 
 	function unmount(vnode: VNode) {

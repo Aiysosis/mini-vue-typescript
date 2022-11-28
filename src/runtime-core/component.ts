@@ -23,6 +23,7 @@ export type ComponentInstance = {
 	props: Props;
 	slots: InternalSlots;
 	isMounted: boolean;
+	subTree: VNode;
 	proxy?: ComponentInstance;
 	render?: () => VNode;
 	setupState?: object;
@@ -37,6 +38,7 @@ export function createComponentInstance(vnode: VNode): ComponentInstance {
 		emit: () => {},
 		slots: {},
 		isMounted: false,
+		subTree: null,
 	};
 	//* 这里用了一个小 trick ，使用 bind函数来提前输入一些内部的参数，这样用户调用的时候就轻松很多
 	instance.emit = emit.bind(null, instance);
