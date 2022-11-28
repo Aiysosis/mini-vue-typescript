@@ -5,10 +5,11 @@ import { ShapeFlags } from "@/shared/shapeFlags";
 import {
 	ComponentInstance,
 	createComponentInstance,
+	Data,
 	setupComponent,
 } from "./component";
 import { createAppAPI } from "./createApp";
-import { Fragment, VNode, Text } from "./vnode";
+import { Fragment, VNode, Text, Props } from "./vnode";
 
 //+ 这种定义方式兼容了 null
 export interface RendererNode {
@@ -70,80 +71,41 @@ export function createRenderer(options: RendererOptions) {
 		setElementText: hostSetElementText,
 	} = options;
 
-	const shouldSetAsProps = (el: RendererElement, key: string, value: any) => {
-		//特殊处理
-		if (key === "form" && el.tagName === "input") return false;
-		//兜底
-		return key in el;
-	};
-
 	const patchProps = (
-		el: RendererElement & {
-			_vei?: Record<string, Invoker | undefined>;
-		},
-		key: string,
-		prevValue: any,
-		nextValue: any
+		el: RendererElement,
+		// key: string,
+		vnode: VNode,
+		oldProps: Props | null,
+		newProps: Props | null
 	) => {
-		//* 分情况讨论
-		const type = typeof el[key];
-
-		//* 事件处理
-		//? 约定以 on开头的属性都视为事件（onclick,onMouseover...）
-		//? vue 中的 @click 之类的都是 onclick 的语法糖
-		if (/^on/.test(key)) {
-			//? 如果直接添加事件，删除事件会很麻烦，可以用一个变量把处理函数记录下来
-			const invokers = el._vei || (el._vei = {}); //* vue event invoker
-			const eventName = key.slice(2).toLowerCase();
-			//? invoker 自身是一个函数，但是它的value属性才是真正的事件处理函数，自己相当于proxy
-			let invoker = invokers[key];
-			if (nextValue) {
-				//* nextValue: Function | Function[]
-				if (!invoker) {
-					//* 缓存
-					//invoker 是带有属性value的函数，它的value是缓存的事件处理函数
-					invoker = ((e: any) => {
-						//* 依次调用处理函数
-						if (Array.isArray(invoker.value)) {
-							for (const fn of invoker.value) {
-								fn(e);
-							}
-						} else {
-							invoker.value(e);
-						}
-					}) as Invoker;
-
-					invoker.value = nextValue;
-					//保存
-					invokers[key] = invoker;
-					el._vei = invokers;
-					el.addEventListener(eventName, invoker);
-				} else {
-					//* 有 invoker 直接覆盖原有的
-					invoker.value = nextValue;
+		//* 逻辑比较复杂：oldProps 和 newProps 都可能为 null
+		//! 一个知识点： null is iterable, 但是无法访问其任何属性
+		if (oldProps !== newProps) {
+			if (oldProps === null) {
+				//* delete all props
+				console.log("[patchProps]: oldProps is null");
+				for (const key in newProps) {
+					hostPatchProp(el, key, null, newProps[key]);
 				}
-			} else if (invoker) {
-				//* 如果没有处理函数，且invoker存在，那么要清空
-				el.removeEventListener(eventName, invoker);
-				//bug 不一定正确
-				invokers[key] = undefined;
-			}
-		}
-		//? class 使用el.className 兼容 + 提速
-		else if (key === "class") {
-			el.className = nextValue || "";
-		} else if (shouldSetAsProps(el, key, nextValue)) {
-			//* 要设置的属性是 DOM Properties
-			//? 只有属性名的情况 例如 buttn 按钮的 disable
-			if (type === "boolean" && nextValue === "") {
-				el[key] = true;
+			} else if (newProps === null) {
+				for (const key in oldProps) {
+					//全部删除
+					hostPatchProp(el, key, oldProps[key], null);
+				}
 			} else {
-				//* 一般情形
-				el[key] = nextValue;
+				console.log("[patchProps]: update", newProps);
+				for (const key in newProps) {
+					const oldValue = oldProps[key];
+					const newValue = newProps[key];
+					console.log(oldValue, newValue);
+					hostPatchProp(el, key, oldValue, newValue);
+				}
+				for (const key in oldProps) {
+					if (!(key in newProps)) {
+						hostPatchProp(el, key, oldProps[key], null);
+					}
+				}
 			}
-		} else {
-			//* 设置的属性没有对应的 DOM Properties, 使用 setAttribute
-			el.setAttribute(key, nextValue);
 		}
 	};
 
@@ -162,6 +124,13 @@ export function createRenderer(options: RendererOptions) {
 
 	function patchElement(n1: VNode, n2: VNode, container: RendererElement) {
 		console.log("[patchElement]: patch");
+
+		//! 重要的细节：n2 上此时是没有el的
+		const el = (n2.el = n1.el);
+
+		const oldProps = n1.props;
+		const newProps = n2.props;
+		patchProps(el, n2, oldProps, newProps);
 	}
 
 	function processFragment(
@@ -226,9 +195,7 @@ export function createRenderer(options: RendererOptions) {
 
 		//* process props
 		if (props) {
-			for (const key in props) {
-				patchProps(el, key, null, props[key]);
-			}
+			patchProps(el, vnode, null, props);
 		}
 
 		//* process children

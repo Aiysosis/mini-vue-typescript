@@ -7,6 +7,8 @@ import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 import { initSlots, InternalSlots } from "./componentSlots";
 import { createVNode, Props, VNode } from "./vnode";
 
+export type Data = Record<string, unknown>;
+
 export type Component = {
 	name?: string;
 	setup?: (
@@ -21,24 +23,25 @@ export type ComponentInstance = {
 	type: Component;
 	emit: Function;
 	props: Props;
-	slots: InternalSlots;
+	slots: InternalSlots | null;
 	isMounted: boolean;
 	subTree: VNode;
-	proxy?: ComponentInstance;
+	proxy: ComponentInstance | null;
 	render?: () => VNode;
-	setupState?: object;
+	setupState?: Data;
 };
 
 export function createComponentInstance(vnode: VNode): ComponentInstance {
 	const instance: ComponentInstance = {
 		vnode,
 		type: vnode.type as Component,
-		props: {},
-		setupState: {},
-		emit: () => {},
-		slots: {},
+		props: null,
+		setupState: null,
+		proxy: null,
+		emit: null!, //+ to be set immediately
+		slots: null,
 		isMounted: false,
-		subTree: null,
+		subTree: null!, //+ will be set after creation
 	};
 	//* 这里用了一个小 trick ，使用 bind函数来提前输入一些内部的参数，这样用户调用的时候就轻松很多
 	instance.emit = emit.bind(null, instance);
@@ -75,7 +78,7 @@ export function handleSetupResult(
 	setupResult: object | Function
 ) {
 	if (typeof setupResult === "object") {
-		instance.setupState = proxyRefs(setupResult);
+		instance.setupState = proxyRefs(setupResult as Data);
 		//extends(setupResult,instance.props)
 	} else {
 		//todo setupResult as Function
