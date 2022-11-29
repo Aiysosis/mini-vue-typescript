@@ -9,7 +9,7 @@ import {
 type DomElement = Element & {
 	_vei?: Record<string, Invoker | undefined>;
 };
-type DomNode = RendererNode;
+type DomNode = Node;
 
 const shouldSetAsProps = (el: DomElement, key: string, value: any) => {
 	//特殊处理
@@ -19,7 +19,6 @@ const shouldSetAsProps = (el: DomElement, key: string, value: any) => {
 };
 const domInterfaceImplement: RendererOptions<DomNode, DomElement> = {
 	patchProp(el, key, prevValue, nextValue) {
-		console.log(prevValue, nextValue);
 		if (!nextValue) {
 			el.removeAttribute(key);
 		} else if (prevValue !== nextValue) {
@@ -88,7 +87,12 @@ const domInterfaceImplement: RendererOptions<DomNode, DomElement> = {
 	insert(el, parent, anchor?) {
 		parent.appendChild(el as Node);
 	},
-	remove(el) {},
+	remove(el) {
+		const parent = el.parentNode;
+		if (parent) {
+			parent.removeChild(el);
+		}
+	},
 	createElement(type) {
 		return document.createElement(type);
 	},
