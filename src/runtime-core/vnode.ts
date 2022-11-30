@@ -11,10 +11,11 @@ export const Text = Symbol("Text");
 
 export interface VNode {
 	type: string | Component | Symbol;
-	el: RendererElement;
+	el: RendererElement; //? el 是该 vnode被渲染后的元素 set->mountElement
 	props: Props | null;
 	children: VNodeChildren;
 	shapeFlag: number;
+	key?: string;
 }
 
 export type Props = {
@@ -30,6 +31,7 @@ export function createVNode(
 	const vnode = {
 		type,
 		props,
+		key: props?.key as string,
 		children,
 		el: null,
 		shapeFlag: initShapeFlag(type),

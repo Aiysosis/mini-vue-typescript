@@ -85,7 +85,7 @@ const domInterfaceImplement: RendererOptions<DomNode, DomElement> = {
 		}
 	},
 	insert(el, parent, anchor?) {
-		parent.appendChild(el as Node);
+		parent.insertBefore(el, anchor || null);
 	},
 	remove(el) {
 		const parent = el.parentNode;

@@ -9,8 +9,8 @@ export const TextToArray = {
 		const self = this;
 
 		return self.isChange === true
-			? h("div", {}, nextChildren)
-			: h("div", {}, prevChildren);
+			? h("div", { id: "next" }, nextChildren)
+			: h("div", { id: "prev" }, prevChildren);
 	},
 	setup() {
 		const isChange = ref(false);

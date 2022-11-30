@@ -9,9 +9,9 @@ export const App = {
 	render() {
 		return h("div", { tId: 1 }, [
 			h("p", {}, "Home page"),
-			h(TextToArray),
+			// h(TextToArray),
 			// h(TextToText),
-			// h(ArrayToArray),
+			h(ArrayToArray),
 			// h(ArrayToText),
 		]);
 	},
