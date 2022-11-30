@@ -1,36 +1,6 @@
 import { h, ref } from "../../lib/aiyso-vue.esm.js";
 
-//+ 1. 左侧对比
-//+ (a b) c
-//+ (a b) d e
-// const prevChildren = [
-// 	h("p", { key: "A" }, "A"),
-// 	h("p", { key: "B" }, "B"),
-// 	h("p", { key: "C" }, "C"),
-// ];
-// const nextChildren = [
-// 	h("p", { key: "A" }, "A"),
-// 	h("p", { key: "B" }, "B"),
-// 	h("p", { key: "D" }, "D"),
-// 	h("p", { key: "E" }, "E"),
-// ];
-
-//+ 2. 右侧对比
-//+   a (b c)
-//+ d e (b c)
-// const prevChildren = [
-// 	h("p", { key: "A" }, "A"),
-// 	h("p", { key: "B" }, "B"),
-// 	h("p", { key: "C" }, "C"),
-// ];
-// const nextChildren = [
-// 	h("p", { key: "D" }, "D"),
-// 	h("p", { key: "E" }, "E"),
-// 	h("p", { key: "B" }, "B"),
-// 	h("p", { key: "C" }, "C"),
-// ];
-
-//+ 3. 添加元素
+//+ 1. 只添加元素
 //+ a b c       d e f
 //+ a b c h i j d e f
 // const prevChildren = [
@@ -53,19 +23,39 @@ import { h, ref } from "../../lib/aiyso-vue.esm.js";
 // 	h("p", { key: "F" }, "F"),
 // ];
 
-//+ 4.删除元素
+//+ 2.只删除元素
+// const prevChildren = [
+// 	h("p", { key: "A" }, "A"),
+// 	h("p", { key: "B" }, "B"),
+// 	h("p", { key: "C" }, "C"),
+// 	h("p", { key: "D" }, "D"),
+// 	h("p", { key: "E" }, "E"),
+// 	h("p", { key: "F" }, "F"),
+// 	h("p", { key: "G" }, "G"),
+// ];
+// const nextChildren = [
+// 	h("p", { key: "A" }, "A"),
+// 	h("p", { key: "B" }, "B"),
+// 	h("p", { key: "F" }, "F"),
+// 	h("p", { key: "G" }, "G"),
+// ];
+
+//+ 3. 复合情形（有元素删除，有元素新增，也有元素更换位置）
+//+ a b *c -d f g
+//+ a b +e *c f g
 const prevChildren = [
 	h("p", { key: "A" }, "A"),
 	h("p", { key: "B" }, "B"),
-	h("p", { key: "C" }, "C"),
+	h("p", { key: "C", id: "prev-c" }, "C"),
 	h("p", { key: "D" }, "D"),
-	h("p", { key: "E" }, "E"),
 	h("p", { key: "F" }, "F"),
 	h("p", { key: "G" }, "G"),
 ];
 const nextChildren = [
 	h("p", { key: "A" }, "A"),
 	h("p", { key: "B" }, "B"),
+	h("p", { key: "E" }, "E"),
+	h("p", { key: "C", id: "next-c" }, "C"),
 	h("p", { key: "F" }, "F"),
 	h("p", { key: "G" }, "G"),
 ];
