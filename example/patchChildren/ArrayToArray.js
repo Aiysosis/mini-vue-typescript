@@ -79,6 +79,7 @@ const nextChildren = [
 	h("p", { key: "D" }, "D"),
 	h("p", { key: "E" }, "E"),
 	h("p", { key: "C" }, "C"),
+	h("p", { key: "H" }, "H"),
 
 	h("p", { key: "F" }, "F"),
 	h("p", { key: "G" }, "G"),

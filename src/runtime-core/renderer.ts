@@ -233,6 +233,8 @@ export function createRenderer(options: RendererOptions) {
 			const newIndexToOldIndexMap = new Array<number>(toBePatched).fill(
 				0
 			);
+			let maxNewIndexSoFar = 0;
+			let moved = false;
 
 			//* 将新的节点放入map
 			for (let j = i; j <= e2; j++) {
@@ -268,16 +270,19 @@ export function createRenderer(options: RendererOptions) {
 					//? c1[j] = prevChild; c2[nextChildIdx] = nextChild;
 					newIndexToOldIndexMap[nextChildIdx - initalPos] = j + 1;
 					patched++;
+					if (nextChildIdx > maxNewIndexSoFar) {
+						maxNewIndexSoFar = nextChildIdx;
+					} else {
+						moved = true;
+					}
 				} else {
 					//* 没找到 -> 删除prevChild
 					hostRemove(prevChild.el);
 				}
-
-				//* 还要检查是否有多的 nextChild
 			}
-			const increasingNewIndexSequence = getSequence(
-				newIndexToOldIndexMap
-			);
+			const increasingNewIndexSequence = moved
+				? getSequence(newIndexToOldIndexMap)
+				: [];
 			console.log(
 				"[newIndexToOldIndexMap]",
 				newIndexToOldIndexMap,
@@ -287,17 +292,23 @@ export function createRenderer(options: RendererOptions) {
 			let k = increasingNewIndexSequence.length - 1;
 			let anchor = e2 + 1 >= c2.length ? null : c2[e2 + 1].el;
 			for (let j = toBePatched - 1; j >= 0; j--) {
-				if (j === increasingNewIndexSequence[k]) {
-					//* 节点位置没有改变，正常遍历
-					k--;
-					//* 此时这个节点位置固定了，它变成了新的锚点
-					anchor = c2[j + initalPos].el;
-				} else {
-					//* 节点位置发生改变，需要将节点插入到锚点处
-					let currentElement = c2[j + initalPos].el;
-					hostInsert(currentElement, container, anchor);
-					//* 这个节点位置固定，它作为新的锚点
-					anchor = currentElement;
+				if (newIndexToOldIndexMap[j] === 0) {
+					//* 这个节点在老的序列中不存在
+					const currentNode = c2[j + initalPos];
+					patch(null, currentNode, container, anchor);
+					anchor = currentNode.el;
+				} else if (moved) {
+					const currentEl = c2[j + initalPos].el;
+					if (k < 0 || j !== increasingNewIndexSequence[k]) {
+						//* 节点位置发生改变，需要将节点插入到锚点处
+						hostInsert(currentEl, container, anchor);
+						//* 这个节点位置固定，它作为新的锚点
+					} else {
+						//* 节点位置没有改变，正常遍历
+						k--;
+						//* 此时这个节点位置固定了，它变成了新的锚点
+					}
+					anchor = currentEl;
 				}
 			}
 		}
