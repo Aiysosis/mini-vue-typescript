@@ -1,3 +1,5 @@
+export { nextTick } from "./scheduler";
+
 export { createRenderer } from "./renderer";
 export { getCurrentInstance } from "./component";
 export { createTextVNode } from "./vnode";

@@ -10,6 +10,7 @@ import {
 } from "./component";
 import { shouldUpdateComponent } from "./componentUpdateUtils";
 import { createAppAPI } from "./createApp";
+import { queueJobs } from "./scheduler";
 import { Fragment, VNode, Text, Props } from "./vnode";
 
 //+ 这种定义方式兼容了 null
@@ -358,8 +359,6 @@ export function createRenderer(options: RendererOptions) {
 					processElement(n1, n2, container, anchor);
 				} else if (n2.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
 					processComponent(n1, n2, container);
-				} else {
-					//todo 其他类型
 				}
 		}
 	};
@@ -439,33 +438,41 @@ export function createRenderer(options: RendererOptions) {
 		instance: ComponentInstance,
 		container: RendererElement
 	) {
-		instance.update = effect(() => {
-			//* 调用组件的render函数以获取vnode，然后挂载
-			if (!instance.isMounted) {
-				const subTree = (instance.subTree = instance.render());
-				patch(null, subTree, container);
-				//! 这一步很关键，patch中设置的 el是为subTree节点设置的，这里还要再次赋值
-				instance.vnode.el = subTree.el;
-				instance.isMounted = true;
-			} else {
-				console.log("[setupRenderEffect]: update");
+		instance.update = effect(
+			() => {
+				//* 调用组件的render函数以获取vnode，然后挂载
+				if (!instance.isMounted) {
+					const subTree = (instance.subTree = instance.render());
+					patch(null, subTree, container);
+					//! 这一步很关键，patch中设置的 el是为subTree节点设置的，这里还要再次赋值
+					instance.vnode.el = subTree.el;
+					instance.isMounted = true;
+				} else {
+					console.log("[setupRenderEffect]: update");
 
-				const { next: nextVNode, vnode: prevVNode } = instance;
-				if (nextVNode) {
-					nextVNode.el = prevVNode.el;
-					updateComponentPreRender(instance, nextVNode);
+					const { next: nextVNode, vnode: prevVNode } = instance;
+					if (nextVNode) {
+						nextVNode.el = prevVNode.el;
+						updateComponentPreRender(instance, nextVNode);
+					}
+
+					//* 拿到新的 subtree
+					//* 这里是由 effect触发的，而 proxy的绑定在setupComponent中，所以需要再次绑定
+					const subTree = instance.render.call(instance.proxy);
+					const prevSubTree = instance.subTree;
+					console.log("prev: ", prevSubTree);
+					console.log("current", subTree);
+					//! 这里第三个参数一定不能使用container，这里的 container是闭包里面的 container，是顶层容器, 真正用于更新的是 el
+					patch(prevSubTree, subTree, prevSubTree.el);
 				}
-
-				//* 拿到新的 subtree
-				//* 这里是由 effect触发的，而 proxy的绑定在setupComponent中，所以需要再次绑定
-				const subTree = instance.render.call(instance.proxy);
-				const prevSubTree = instance.subTree;
-				console.log("prev: ", prevSubTree);
-				console.log("current", subTree);
-				//! 这里第三个参数一定不能使用container，这里的 container是闭包里面的 container，是顶层容器, 真正用于更新的是 el
-				patch(prevSubTree, subTree, prevSubTree.el);
+			},
+			{
+				scheduler() {
+					console.log("scheduler");
+					queueJobs(instance.update);
+				},
 			}
-		});
+		);
 	}
 
 	function updateComponentPreRender(
