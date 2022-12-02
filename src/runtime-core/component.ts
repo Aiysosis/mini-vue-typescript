@@ -1,3 +1,4 @@
+import { Runner } from "@/reactivity/effect";
 import { shallowReadonly } from "@/reactivity/reactive";
 import { extend } from "@/shared/index";
 import { proxyRefs } from "../reactivity/index";
@@ -28,7 +29,9 @@ export type ComponentInstance = {
 	subTree: VNode;
 	proxy: ComponentInstance | null;
 	render?: () => VNode;
+	update: Runner;
 	setupState?: Data;
+	next: VNode | null;
 };
 
 export function createComponentInstance(vnode: VNode): ComponentInstance {
@@ -40,8 +43,10 @@ export function createComponentInstance(vnode: VNode): ComponentInstance {
 		proxy: null,
 		emit: null!, //+ to be set immediately
 		slots: null,
+		update: null,
 		isMounted: false,
 		subTree: null!, //+ will be set after creation
+		next: null,
 	};
 	//* 这里用了一个小 trick ，使用 bind函数来提前输入一些内部的参数，这样用户调用的时候就轻松很多
 	instance.emit = emit.bind(null, instance);

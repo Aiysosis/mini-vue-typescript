@@ -8,6 +8,7 @@ import {
 	Data,
 	setupComponent,
 } from "./component";
+import { shouldUpdateComponent } from "./componentUpdateUtils";
 import { createAppAPI } from "./createApp";
 import { Fragment, VNode, Text, Props } from "./vnode";
 
@@ -189,7 +190,7 @@ export function createRenderer(options: RendererOptions) {
 			const n2 = c2[i];
 
 			if (isSameVNode(n1, n2)) {
-				patch(n1, n2, container, parentAnchor); //递归地对比
+				patch(n1, n2, n1.el, parentAnchor); //递归地对比
 			} else break;
 
 			i++;
@@ -283,12 +284,6 @@ export function createRenderer(options: RendererOptions) {
 			const increasingNewIndexSequence = moved
 				? getSequence(newIndexToOldIndexMap)
 				: [];
-			console.log(
-				"[newIndexToOldIndexMap]",
-				newIndexToOldIndexMap,
-				" has a increasing sub sequence ",
-				increasingNewIndexSequence
-			);
 			let k = increasingNewIndexSequence.length - 1;
 			let anchor = e2 + 1 >= c2.length ? null : c2[e2 + 1].el;
 			for (let j = toBePatched - 1; j >= 0; j--) {
@@ -430,7 +425,7 @@ export function createRenderer(options: RendererOptions) {
 	}
 	// 组件挂载 @fn mountComponent
 	function mountComponent(vnode: VNode, container: RendererElement) {
-		const instance = createComponentInstance(vnode);
+		const instance = (vnode.component = createComponentInstance(vnode));
 
 		//* 这一步初始化了Props，slots，setup函数，
 		//* component proxy
@@ -444,7 +439,7 @@ export function createRenderer(options: RendererOptions) {
 		instance: ComponentInstance,
 		container: RendererElement
 	) {
-		effect(() => {
+		instance.update = effect(() => {
 			//* 调用组件的render函数以获取vnode，然后挂载
 			if (!instance.isMounted) {
 				const subTree = (instance.subTree = instance.render());
@@ -454,6 +449,13 @@ export function createRenderer(options: RendererOptions) {
 				instance.isMounted = true;
 			} else {
 				console.log("[setupRenderEffect]: update");
+
+				const { next: nextVNode, vnode: prevVNode } = instance;
+				if (nextVNode) {
+					nextVNode.el = prevVNode.el;
+					updateComponentPreRender(instance, nextVNode);
+				}
+
 				//* 拿到新的 subtree
 				//* 这里是由 effect触发的，而 proxy的绑定在setupComponent中，所以需要再次绑定
 				const subTree = instance.render.call(instance.proxy);
@@ -466,12 +468,29 @@ export function createRenderer(options: RendererOptions) {
 		});
 	}
 
+	function updateComponentPreRender(
+		instance: ComponentInstance,
+		nextVNode: VNode
+	) {
+		instance.vnode = nextVNode;
+		instance.props = nextVNode.props;
+		instance.next = null;
+	}
+
+	//@fn patchComponent
 	function patchComponent(n1: VNode, n2: VNode, container: RendererElement) {
 		console.log("[Patch component]: patch");
+		const instance = (n2.component = n1.component);
+		if (shouldUpdateComponent(n1, n2)) {
+			instance.next = n2;
+			instance.update();
+		} else {
+			n2.el = n1.el;
+			instance.vnode = n2;
+		}
 	}
 
 	function unmount(vnode: VNode) {
-		//todo 调用生命周期函数 or 钩子函数
 		hostRemove(vnode.el);
 	}
 

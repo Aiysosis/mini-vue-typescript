@@ -1,6 +1,6 @@
 import { isArray, isObject, isString } from "@/shared/index";
 import { ShapeFlags } from "@/shared/shapeFlags";
-import { Component } from "./component";
+import { Component, ComponentInstance } from "./component";
 import { RawSlots } from "./componentSlots";
 import { RendererElement } from "./renderer";
 
@@ -15,6 +15,7 @@ export interface VNode {
 	props: Props | null;
 	children: VNodeChildren;
 	shapeFlag: number;
+	component: ComponentInstance;
 	key?: string;
 }
 
@@ -34,6 +35,7 @@ export function createVNode(
 		key: props?.key as string,
 		children,
 		el: null,
+		component: null,
 		shapeFlag: initShapeFlag(type),
 	};
 

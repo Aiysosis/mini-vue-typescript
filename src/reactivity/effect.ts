@@ -117,7 +117,7 @@ type EffectOpts = {
 	["onStop"]?: Function;
 };
 
-type Runner = {
+export type Runner = {
 	effect: ReactiveEffect;
 	(): any;
 };
