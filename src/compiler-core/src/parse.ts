@@ -21,7 +21,7 @@ export function baseParse(content: string) {
 function parseChildren(context: ParseContext) {
 	const nodes = [];
 
-	let node;
+	let node = null;
 	const s = context.source;
 
 	if (s.startsWith("{{")) {
@@ -32,9 +32,28 @@ function parseChildren(context: ParseContext) {
 		}
 	}
 
+	if (!node) {
+		node = parseText(context);
+	}
+
 	nodes.push(node);
 
 	return nodes;
+}
+
+function parseText(context: ParseContext) {
+	const content = parseTextData(context, context.source.length);
+
+	return {
+		type: NodeTypes.TEXT,
+		content,
+	};
+}
+
+function parseTextData(context: ParseContext, length: number) {
+	const content = context.source.slice(0, length);
+	advanceBy(context, length);
+	return content;
 }
 
 function parseElement(context: ParseContext): any {
@@ -79,10 +98,10 @@ function parseInterpolation(context: ParseContext) {
 	advanceBy(context, openDelimeter.length); //舍弃前两位的 {{
 
 	const contentLength = closeIdx - openDelimeter.length;
-	const rawContent = context.source.slice(0, contentLength);
+	const rawContent = parseTextData(context, contentLength);
 	const content = rawContent.trim();
 
-	advanceBy(context, contentLength + closeDelimeter.length);
+	advanceBy(context, closeDelimeter.length);
 
 	return {
 		type: NodeTypes.INTERPOLATION,
