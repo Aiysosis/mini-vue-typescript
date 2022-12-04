@@ -5,6 +5,27 @@ const enum TagType {
 	END,
 }
 
+interface ASTNode {
+	type: NodeTypes;
+}
+
+interface ElementNode extends ASTNode {
+	tag: string;
+	children: ASTNode[];
+}
+
+interface TextNode extends ASTNode {
+	content: string;
+}
+
+interface ExpressionNode extends ASTNode {
+	content: string;
+}
+
+interface InterPolationNode extends ASTNode {
+	content: ExpressionNode;
+}
+
 type ParseContext = {
 	source: string;
 };
@@ -15,34 +36,62 @@ export function baseParse(content: string) {
 	//* 而判断用什么方法进行解析，则是根据当前待解析字符串的头部元素进行判断，如如果发现字符串头部为 {{，
 	//* 说明接下来是插值，那么就调用相应的函数进行解析。同时，用于步进剪切的函数可以抽离出来，这样各种类型的解析都可以复用
 
-	return createRoot(parseChildren(context));
+	return createRoot(parseChildren(context, []));
 }
 
-function parseChildren(context: ParseContext) {
-	const nodes = [];
+//@fn parseChildren
+function parseChildren(context: ParseContext, ancesters: ElementNode[]) {
+	const nodes: ASTNode[] = [];
 
-	let node = null;
-	const s = context.source;
+	while (!isEnd(context, ancesters)) {
+		let node = null;
+		const s = context.source;
 
-	if (s.startsWith("{{")) {
-		node = parseInterpolation(context);
-	} else if (s[0] == "<") {
-		if (/[a-zA-Z]/.test(s[1])) {
-			node = parseElement(context);
+		if (s.startsWith("{{")) {
+			node = parseInterpolation(context);
+		} else if (s[0] == "<") {
+			if (/[a-zA-Z]/.test(s[1])) {
+				node = parseElement(context, ancesters);
+			}
 		}
+
+		if (!node) {
+			node = parseText(context);
+		}
+
+		nodes.push(node);
 	}
-
-	if (!node) {
-		node = parseText(context);
-	}
-
-	nodes.push(node);
-
 	return nodes;
 }
 
-function parseText(context: ParseContext) {
-	const content = parseTextData(context, context.source.length);
+function isEnd(context: ParseContext, ancesters: ElementNode[]) {
+	let s = context.source;
+	if (s.startsWith("</")) {
+		//? 为什么要遍历而不是直接检查栈顶？ 因为标签不一定是完全匹配的，因此要使用更健壮的检查策略，否则在出问题时会陷入死循环
+		for (const el of ancesters) {
+			if (s.slice(2, 2 + el.tag.length) === el.tag) return true;
+		}
+	}
+	return !s;
+}
+
+//@fn parseText
+function parseText(context: ParseContext): TextNode {
+	let s = context.source;
+
+	let endIndex = s.length;
+	let endTokens = ["{{", "<"];
+	let index = -1;
+	for (const token of endTokens) {
+		index = s.indexOf(token);
+		if (index !== -1) {
+			endIndex = Math.min(endIndex, index);
+		}
+	}
+
+	const content = parseTextData(context, endIndex);
+
+	console.log("------------------text content: ", content);
 
 	return {
 		type: NodeTypes.TEXT,
@@ -50,24 +99,36 @@ function parseText(context: ParseContext) {
 	};
 }
 
+//@fn parseTextData
 function parseTextData(context: ParseContext, length: number) {
 	const content = context.source.slice(0, length);
 	advanceBy(context, length);
 	return content;
 }
 
-function parseElement(context: ParseContext): any {
+//@fn parseElement
+function parseElement(
+	context: ParseContext,
+	ancesters: ElementNode[]
+): ElementNode {
 	//? 思路，先提取出tag内容，然后进行 括号匹配？找到相应的闭合标签
 	const element = parseTag(context, TagType.START);
-	console.log("source: ", context.source);
 
-	parseTag(context, TagType.END);
-	console.log("source: ", context.source);
+	ancesters.push(element);
+	element.children = parseChildren(context, ancesters);
+	ancesters.pop();
+
+	if (context.source.slice(2, 2 + element.tag.length) === element.tag) {
+		parseTag(context, TagType.END);
+	} else {
+		throw new Error(element.tag + " lack end tag");
+	}
 
 	return element;
 }
 
-function parseTag(context: ParseContext, type: TagType) {
+//@fn parseTag
+function parseTag(context: ParseContext, type: TagType): ElementNode {
 	const match = /^<\/?([a-z]+)/i.exec(context.source);
 	let tag: string;
 	if (match) {
@@ -81,10 +142,12 @@ function parseTag(context: ParseContext, type: TagType) {
 	return {
 		type: NodeTypes.ELEMENT,
 		tag,
+		children: [],
 	};
 }
 
-function parseInterpolation(context: ParseContext) {
+//@fn parseInterpolation
+function parseInterpolation(context: ParseContext): InterPolationNode {
 	//todo 解析插值
 	//? {{exp}} -> exp
 	const openDelimeter = "{{";
