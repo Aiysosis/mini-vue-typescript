@@ -11,12 +11,19 @@ export function codegen(ast: ASTRoot) {
 
 	const { push } = context;
 
+	const VueBinging = "vue";
+	const helpers = ["toDisplayString"];
+	const aliasHelpers = (s: string) => `${s} as _${s}`;
+	push(`import { ${helpers.map(aliasHelpers)} } from "${VueBinging}"`);
+	push("\n");
+
 	push("export ");
 	let functionName = "render";
 	let args = ["_ctx", " _cache", "$props", "$setup", "$data", "$options"];
 	const signature = args.join(", ");
-	push(`function ${functionName}(${signature}){`);
-	push("return ");
+	push(`function ${functionName}(${signature}){\n`);
+	push("\treturn ");
+	push("\n");
 	genNode(ast.codegenNode, context);
 	push("}");
 

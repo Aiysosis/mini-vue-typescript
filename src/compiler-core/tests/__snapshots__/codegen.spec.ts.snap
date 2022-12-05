@@ -1,3 +1,8 @@
 // Vitest Snapshot v1
 
-exports[`codegen > test 1`] = `"export function render(_ctx,  _cache, $props, $setup, $data, $options){return \\"hi\\"}"`;
+exports[`codegen > interpolation 1`] = `
+"import { toDisplayString as _toDisplayString } from \\"vue\\"
+export function render(_ctx,  _cache, $props, $setup, $data, $options){
+	return 
+}"
+`;

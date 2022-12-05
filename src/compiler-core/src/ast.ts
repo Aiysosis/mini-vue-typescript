@@ -1,5 +1,6 @@
 import {
 	ASTNode,
+	ASTRoot,
 	ElementNode,
 	ExpressionNode,
 	InterPolationNode,
@@ -7,12 +8,15 @@ import {
 } from "./parse";
 
 export enum NodeTypes {
+	ROOT,
+	TEXT,
+	ELEMENT,
 	INTERPOLATION,
 	SIMPLE_EXPRESSION,
-	ELEMENT,
-	TEXT,
-	ROOT,
 }
+
+export const isRootNode = (node: ASTNode): node is ASTRoot =>
+	node.type === NodeTypes.ROOT;
 
 export const isElementNode = (node: ASTNode): node is ElementNode =>
 	node.type === NodeTypes.ELEMENT;
