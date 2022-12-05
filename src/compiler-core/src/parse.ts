@@ -5,24 +5,28 @@ const enum TagType {
 	END,
 }
 
-interface ASTNode {
+export interface ASTNode {
 	type: NodeTypes;
 }
 
-interface ElementNode extends ASTNode {
+export interface ASTRoot extends ASTNode {
+	children: ASTNode[];
+}
+
+export interface ElementNode extends ASTNode {
 	tag: string;
 	children: ASTNode[];
 }
 
-interface TextNode extends ASTNode {
+export interface TextNode extends ASTNode {
 	content: string;
 }
 
-interface ExpressionNode extends ASTNode {
+export interface ExpressionNode extends ASTNode {
 	content: string;
 }
 
-interface InterPolationNode extends ASTNode {
+export interface InterPolationNode extends ASTNode {
 	content: ExpressionNode;
 }
 
@@ -179,8 +183,9 @@ function advanceBy(context: ParseContext, start: number) {
 	context.source = context.source.slice(start);
 }
 
-function createRoot(children: any[]) {
+function createRoot(children: ASTNode[]): ASTRoot {
 	return {
+		type: NodeTypes.ROOT,
 		children,
 	};
 }
