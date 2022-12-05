@@ -16,6 +16,12 @@ export function transform(root: ASTRoot, options?: TransformOptions) {
 	const context = createTransformContext(root, options);
 	//*DFS
 	traverseNode(root, context);
+
+	createRootCodegen(root);
+}
+
+function createRootCodegen(root: ASTRoot) {
+	root.codegenNode = root.children[0];
 }
 
 function createTransformContext(
@@ -24,7 +30,7 @@ function createTransformContext(
 ): TransformContext {
 	const context = {
 		root,
-		nodeTransforms: options.nodeTransforms || [],
+		nodeTransforms: options?.nodeTransforms || [],
 	};
 	return context;
 }

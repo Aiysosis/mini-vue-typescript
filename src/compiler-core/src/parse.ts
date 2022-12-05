@@ -10,6 +10,7 @@ export interface ASTNode {
 }
 
 export interface ASTRoot extends ASTNode {
+	codegenNode: ASTNode;
 	children: ASTNode[];
 }
 
@@ -186,6 +187,7 @@ function advanceBy(context: ParseContext, start: number) {
 function createRoot(children: ASTNode[]): ASTRoot {
 	return {
 		type: NodeTypes.ROOT,
+		codegenNode: null,
 		children,
 	};
 }
