@@ -1,12 +1,27 @@
-import { isExpressionNode, isInterpolationNode, isTextNode } from "./ast";
+import { isString } from "@/shared";
+import {
+	isCompoundExpressionNode,
+	isElementNode,
+	isInterpolationNode,
+	isSimpleExpressionNode,
+	isTextNode,
+	NodeTypes,
+} from "./ast";
 import {
 	ASTNode,
 	ASTRoot,
+	CompoundExpressionNode,
+	ElementNode,
 	ExpressionNode,
 	InterPolationNode,
 	TextNode,
 } from "./parse";
-import { helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers";
+import {
+	CREATE_ELEMENT_BLOCK,
+	helperMapName,
+	OPEN_BLOCK,
+	TO_DISPLAY_STRING,
+} from "./runtimeHelpers";
 
 export type CodegenContext = {
 	code: string;
@@ -49,15 +64,56 @@ function genFunctionPreamble(context: CodegenContext, ast: ASTRoot) {
 }
 
 function genNode(context: CodegenContext, node: ASTNode) {
-	const { push } = context;
-	if (isTextNode(node)) {
-		genText(context, node);
-	} else if (isInterpolationNode(node)) {
-		genInterpolation(context, node);
-	} else if (isExpressionNode(node)) {
-		genExpression(context, node);
+	switch (node.type) {
+		case NodeTypes.ELEMENT:
+			genElement(context, node as ElementNode);
+			break;
+		case NodeTypes.TEXT:
+			genText(context, node as TextNode);
+			break;
+		case NodeTypes.INTERPOLATION:
+			genInterpolation(context, node as InterPolationNode);
+			break;
+		case NodeTypes.SIMPLE_EXPRESSION:
+			genExpression(context, node as ExpressionNode);
+			break;
+		case NodeTypes.COMPOUND_EXPRESSION:
+			genCompoundExpressionNode(context, node as CompoundExpressionNode);
+			break;
+		default:
+			break;
 	}
 }
+function genCompoundExpressionNode(
+	context: CodegenContext,
+	node: CompoundExpressionNode
+) {
+	const { push } = context;
+	for (const child of node.children) {
+		if (isString(child)) {
+			push(child);
+		} else {
+			genNode(context, child);
+		}
+	}
+}
+
+function genElement(context: CodegenContext, node: ElementNode) {
+	const { push, helper } = context;
+	push("(");
+	push(helper(OPEN_BLOCK));
+	push(", ");
+	push(helper(CREATE_ELEMENT_BLOCK));
+	push(`("${node.tag}"), null, `);
+
+	for (const child of node.children) {
+		console.log("gen child: ", child);
+		genNode(context, child);
+	}
+
+	push(")");
+}
+
 function genText(context: CodegenContext, node: TextNode) {
 	const { push } = context;
 	push(`"${node.content}"`);

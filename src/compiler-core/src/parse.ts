@@ -32,6 +32,19 @@ export interface InterPolationNode extends ASTNode {
 	content: ExpressionNode;
 }
 
+export type CompoundExpressionChild = string | TextNode | InterPolationNode;
+
+export class CompoundExpressionNode implements ASTNode {
+	children: CompoundExpressionChild[];
+	type = NodeTypes.COMPOUND_EXPRESSION;
+	constructor(val?: CompoundExpressionChild) {
+		this.children = [val];
+	}
+	push(this: CompoundExpressionNode, val: CompoundExpressionChild) {
+		this.children.push(val);
+	}
+}
+
 type ParseContext = {
 	source: string;
 };
@@ -97,8 +110,6 @@ function parseText(context: ParseContext): TextNode {
 
 	const content = parseTextData(context, endIndex);
 
-	console.log("------------------text content: ", content);
-
 	return {
 		type: NodeTypes.TEXT,
 		content,
@@ -138,7 +149,6 @@ function parseTag(context: ParseContext, type: TagType): ElementNode {
 	const match = /^<\/?([a-z]+)/i.exec(context.source);
 	let tag: string;
 	if (match) {
-		console.log(match);
 		tag = match[1];
 		advanceBy(context, match[0].length + 1);
 	}

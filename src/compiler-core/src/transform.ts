@@ -5,7 +5,12 @@ import {
 	isTextNode,
 } from "./ast";
 import { ASTNode, ASTRoot, ElementNode } from "./parse";
-import { helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers";
+import {
+	CREATE_ELEMENT_BLOCK,
+	helperMapName,
+	OPEN_BLOCK,
+	TO_DISPLAY_STRING,
+} from "./runtimeHelpers";
 
 export type TransformPlugin = (node: ASTNode) => void;
 
@@ -17,7 +22,7 @@ export type TransformContext = {
 	root: ASTRoot;
 	nodeTransforms: TransformPlugin[];
 	helpers: Map<symbol, boolean>;
-	helper: (name: symbol) => void;
+	helper: (name: symbol[]) => void;
 };
 
 export function transform(root: ASTRoot, options?: TransformOptions) {
@@ -42,8 +47,10 @@ function createTransformContext(
 		root,
 		nodeTransforms: options?.nodeTransforms || [],
 		helpers: new Map(),
-		helper(name) {
-			context.helpers.set(name, true);
+		helper(names) {
+			for (const name of names) {
+				context.helpers.set(name, true);
+			}
 		},
 	};
 	return context;
@@ -56,9 +63,10 @@ function traverseNode(node: ASTRoot | ElementNode, context: TransformContext) {
 			traverseNode(child, context);
 		} else if (isElementNode(child)) {
 			traverseNode(child, context);
+			context.helper([OPEN_BLOCK, CREATE_ELEMENT_BLOCK]);
 		} else if (isTextNode(child)) {
 		} else if (isInterpolationNode(child)) {
-			context.helper(TO_DISPLAY_STRING);
+			context.helper([TO_DISPLAY_STRING]);
 		}
 
 		for (const fn of transforms) {

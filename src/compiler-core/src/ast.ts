@@ -1,6 +1,7 @@
 import {
 	ASTNode,
 	ASTRoot,
+	CompoundExpressionNode,
 	ElementNode,
 	ExpressionNode,
 	InterPolationNode,
@@ -13,6 +14,7 @@ export enum NodeTypes {
 	ELEMENT,
 	INTERPOLATION,
 	SIMPLE_EXPRESSION,
+	COMPOUND_EXPRESSION,
 }
 
 export const isRootNode = (node: ASTNode): node is ASTRoot =>
@@ -27,5 +29,10 @@ export const isTextNode = (node: ASTNode): node is TextNode =>
 export const isInterpolationNode = (node: ASTNode): node is InterPolationNode =>
 	node.type === NodeTypes.INTERPOLATION;
 
-export const isExpressionNode = (node: ASTNode): node is ExpressionNode =>
+export const isSimpleExpressionNode = (node: ASTNode): node is ExpressionNode =>
 	node.type === NodeTypes.SIMPLE_EXPRESSION;
+
+export const isCompoundExpressionNode = (
+	node: ASTNode
+): node is CompoundExpressionNode =>
+	node.type === NodeTypes.COMPOUND_EXPRESSION;
