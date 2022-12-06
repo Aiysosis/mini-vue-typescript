@@ -1,5 +1,11 @@
-import { isTextNode } from "./ast";
-import { ASTNode, ASTRoot } from "./parse";
+import { isExpressionNode, isInterpolationNode, isTextNode } from "./ast";
+import {
+	ASTNode,
+	ASTRoot,
+	ExpressionNode,
+	InterPolationNode,
+	TextNode,
+} from "./parse";
 
 export type CodegenContext = {
 	code: string;
@@ -11,11 +17,7 @@ export function codegen(ast: ASTRoot) {
 
 	const { push } = context;
 
-	const VueBinging = "vue";
-	const helpers = ["toDisplayString"];
-	const aliasHelpers = (s: string) => `${s} as _${s}`;
-	push(`import { ${helpers.map(aliasHelpers)} } from "${VueBinging}"`);
-	push("\n");
+	genFunctionPreamble(context, ast);
 
 	push("export ");
 	let functionName = "render";
@@ -23,20 +25,53 @@ export function codegen(ast: ASTRoot) {
 	const signature = args.join(", ");
 	push(`function ${functionName}(${signature}){\n`);
 	push("\treturn ");
+	genNode(context, ast.codegenNode);
 	push("\n");
-	genNode(ast.codegenNode, context);
 	push("}");
 
 	return {
 		code: context.code,
 	};
 }
-function genNode(node: ASTNode, context: CodegenContext) {
+function genFunctionPreamble(context: CodegenContext, ast: ASTRoot) {
+	const { push } = context;
+	const VueBinging = "vue";
+	// const helpers = ["toDisplayString"]; now recorded in ast object
+	const aliasHelpers = (s: string) => `${s} as _${s}`;
+	if (ast.helpers.length > 0)
+		push(
+			`import { ${ast.helpers.map(aliasHelpers)} } from "${VueBinging}"`
+		);
+	push("\n");
+}
+
+function genNode(context: CodegenContext, node: ASTNode) {
 	const { push } = context;
 	if (isTextNode(node)) {
-		push(`"${node.content}"`);
+		genText(context, node);
+	} else if (isInterpolationNode(node)) {
+		genInterpolation(context, node);
+	} else if (isExpressionNode(node)) {
+		genExpression(context, node);
 	}
 }
+function genText(context: CodegenContext, node: TextNode) {
+	const { push } = context;
+	push(`"${node.content}"`);
+}
+
+function genInterpolation(context: CodegenContext, node: InterPolationNode) {
+	const { push } = context;
+	push("_toDisplayString(");
+	genNode(context, node.content);
+	push(")");
+}
+
+function genExpression(context: CodegenContext, node: ExpressionNode) {
+	const { push } = context;
+	push(node.content);
+}
+
 function createCodegenContext(): CodegenContext {
 	const context = {
 		code: "",

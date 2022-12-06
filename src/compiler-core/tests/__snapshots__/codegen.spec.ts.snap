@@ -3,6 +3,13 @@
 exports[`codegen > interpolation 1`] = `
 "import { toDisplayString as _toDisplayString } from \\"vue\\"
 export function render(_ctx,  _cache, $props, $setup, $data, $options){
-	return 
+	return _toDisplayString(_ctx.message)
+}"
+`;
+
+exports[`codegen > string 1`] = `
+"
+export function render(_ctx,  _cache, $props, $setup, $data, $options){
+	return \\"hi\\"
 }"
 `;

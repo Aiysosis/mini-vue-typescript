@@ -1,6 +1,7 @@
 import { codegen } from "../src/codegen";
 import { baseParse } from "../src/parse";
 import { transform } from "../src/transform";
+import { transformExpression } from "../src/transforms/transformExpression";
 
 describe("codegen", () => {
 	// see https://template-explorer.vuejs.org
@@ -16,7 +17,7 @@ describe("codegen", () => {
 		expect(code).toMatchSnapshot();
 	});
 
-	test.only("interpolation", () => {
+	test("interpolation", () => {
 		/**
          * *{{ message }}
          * import { toDisplayString as _toDisplayString } from "vue"
@@ -27,7 +28,9 @@ describe("codegen", () => {
          */
 		const ast = baseParse("{{ message }}");
 
-		transform(ast);
+		transform(ast, {
+			nodeTransforms: [transformExpression],
+		});
 
 		console.log("ast: ", ast);
 

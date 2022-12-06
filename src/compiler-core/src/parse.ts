@@ -11,6 +11,7 @@ export interface ASTNode {
 
 export interface ASTRoot extends ASTNode {
 	codegenNode: ASTNode;
+	helpers: string[];
 	children: ASTNode[];
 }
 
@@ -188,6 +189,7 @@ function createRoot(children: ASTNode[]): ASTRoot {
 	return {
 		type: NodeTypes.ROOT,
 		codegenNode: null,
+		helpers: [],
 		children,
 	};
 }
