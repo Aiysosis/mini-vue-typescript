@@ -6,10 +6,12 @@ import {
 	InterPolationNode,
 	TextNode,
 } from "./parse";
+import { helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers";
 
 export type CodegenContext = {
 	code: string;
 	push: (source: string) => void;
+	helper: (key: symbol) => string;
 };
 
 export function codegen(ast: ASTRoot) {
@@ -37,7 +39,8 @@ function genFunctionPreamble(context: CodegenContext, ast: ASTRoot) {
 	const { push } = context;
 	const VueBinging = "vue";
 	// const helpers = ["toDisplayString"]; now recorded in ast object
-	const aliasHelpers = (s: string) => `${s} as _${s}`;
+	const aliasHelpers = (s: symbol) =>
+		`${helperMapName[s]} as _${helperMapName[s]}`;
 	if (ast.helpers.length > 0)
 		push(
 			`import { ${ast.helpers.map(aliasHelpers)} } from "${VueBinging}"`
@@ -61,8 +64,9 @@ function genText(context: CodegenContext, node: TextNode) {
 }
 
 function genInterpolation(context: CodegenContext, node: InterPolationNode) {
-	const { push } = context;
-	push("_toDisplayString(");
+	const { push, helper } = context;
+	push(helper(TO_DISPLAY_STRING));
+	push("(");
 	genNode(context, node.content);
 	push(")");
 }
@@ -73,10 +77,13 @@ function genExpression(context: CodegenContext, node: ExpressionNode) {
 }
 
 function createCodegenContext(): CodegenContext {
-	const context = {
+	const context: CodegenContext = {
 		code: "",
 		push(source: string) {
 			context.code += source;
+		},
+		helper(key) {
+			return `_${helperMapName[key]}`;
 		},
 	};
 	return context;

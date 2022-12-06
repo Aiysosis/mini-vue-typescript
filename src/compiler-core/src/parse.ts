@@ -11,7 +11,7 @@ export interface ASTNode {
 
 export interface ASTRoot extends ASTNode {
 	codegenNode: ASTNode;
-	helpers: string[];
+	helpers: symbol[];
 	children: ASTNode[];
 }
 

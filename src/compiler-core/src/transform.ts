@@ -1,5 +1,11 @@
-import { isElementNode, isInterpolationNode, isTextNode } from "./ast";
+import {
+	isElementNode,
+	isInterpolationNode,
+	isRootNode,
+	isTextNode,
+} from "./ast";
 import { ASTNode, ASTRoot, ElementNode } from "./parse";
+import { helperMapName, TO_DISPLAY_STRING } from "./runtimeHelpers";
 
 export type TransformPlugin = (node: ASTNode) => void;
 
@@ -10,8 +16,8 @@ export type TransformOptions = {
 export type TransformContext = {
 	root: ASTRoot;
 	nodeTransforms: TransformPlugin[];
-	helpers: Map<string, boolean>;
-	helper: (name: string) => void;
+	helpers: Map<symbol, boolean>;
+	helper: (name: symbol) => void;
 };
 
 export function transform(root: ASTRoot, options?: TransformOptions) {
@@ -46,11 +52,13 @@ function createTransformContext(
 function traverseNode(node: ASTRoot | ElementNode, context: TransformContext) {
 	const transforms = context.nodeTransforms;
 	for (const child of node.children) {
-		if (isElementNode(child)) {
+		if (isRootNode(child)) {
+			traverseNode(child, context);
+		} else if (isElementNode(child)) {
 			traverseNode(child, context);
 		} else if (isTextNode(child)) {
 		} else if (isInterpolationNode(child)) {
-			context.helper("toDisplayString");
+			context.helper(TO_DISPLAY_STRING);
 		}
 
 		for (const fn of transforms) {
