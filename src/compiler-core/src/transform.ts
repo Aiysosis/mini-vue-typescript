@@ -4,7 +4,7 @@ import {
 	isRootNode,
 	isTextNode,
 } from "./ast";
-import { ASTNode, ASTRoot, ElementNode } from "./parse";
+import { ASTNode, ASTRoot, ElementNode } from "./ast";
 import {
 	CREATE_ELEMENT_BLOCK,
 	helperMapName,

@@ -1,5 +1,5 @@
-import { isInterpolationNode } from "../ast";
-import { ExpressionNode } from "../parse";
+import { isInterpolationNode, ExpressionNode } from "../ast";
+
 import { TransformPlugin } from "../transform";
 
 export const transformExpression: TransformPlugin = node => {

@@ -1,16 +1,17 @@
-import { isElementNode, isInterpolationNode, isTextNode } from "../ast";
 import {
 	ASTNode,
 	CompoundExpressionNode,
 	InterPolationNode,
 	TextNode,
-} from "../parse";
+	isElementNode,
+	isInterpolationNode,
+	isTextNode,
+	isText,
+	createCompoundExpressionNode,
+} from "../ast";
 import { TransformPlugin } from "../transform";
 
 export const transformText: TransformPlugin = node => {
-	const isText = (node: ASTNode): node is TextNode | InterPolationNode =>
-		isTextNode(node) || isInterpolationNode(node);
-
 	let compoundNode: CompoundExpressionNode;
 
 	if (isElementNode(node)) {
@@ -21,11 +22,12 @@ export const transformText: TransformPlugin = node => {
 				for (let j = i + 1; j < children.length; j++) {
 					const nextChild = children[j];
 					if (isText(nextChild)) {
-						if (!compoundNode)
-							children[i] = compoundNode =
-								new CompoundExpressionNode(child);
-						compoundNode.push(" + ");
-						compoundNode.push(nextChild);
+						if (!compoundNode) {
+							compoundNode = children[i] =
+								createCompoundExpressionNode(child);
+						}
+						compoundNode.children.push(" + ");
+						compoundNode.children.push(nextChild);
 						children.splice(j, 1);
 						j--;
 					} else {

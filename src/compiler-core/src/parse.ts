@@ -1,48 +1,15 @@
-import { NodeTypes } from "./ast";
+import {
+	ASTNode,
+	ASTRoot,
+	ElementNode,
+	InterPolationNode,
+	NodeTypes,
+	TextNode,
+} from "./ast";
 
 const enum TagType {
 	START,
 	END,
-}
-
-export interface ASTNode {
-	type: NodeTypes;
-}
-
-export interface ASTRoot extends ASTNode {
-	codegenNode: ASTNode;
-	helpers: symbol[];
-	children: ASTNode[];
-}
-
-export interface ElementNode extends ASTNode {
-	tag: string;
-	children: ASTNode[];
-}
-
-export interface TextNode extends ASTNode {
-	content: string;
-}
-
-export interface ExpressionNode extends ASTNode {
-	content: string;
-}
-
-export interface InterPolationNode extends ASTNode {
-	content: ExpressionNode;
-}
-
-export type CompoundExpressionChild = string | TextNode | InterPolationNode;
-
-export class CompoundExpressionNode implements ASTNode {
-	children: CompoundExpressionChild[];
-	type = NodeTypes.COMPOUND_EXPRESSION;
-	constructor(val?: CompoundExpressionChild) {
-		this.children = [val];
-	}
-	push(this: CompoundExpressionNode, val: CompoundExpressionChild) {
-		this.children.push(val);
-	}
 }
 
 type ParseContext = {

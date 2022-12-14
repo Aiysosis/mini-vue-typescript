@@ -1,13 +1,3 @@
-import {
-	ASTNode,
-	ASTRoot,
-	CompoundExpressionNode,
-	ElementNode,
-	ExpressionNode,
-	InterPolationNode,
-	TextNode,
-} from "./parse";
-
 export enum NodeTypes {
 	ROOT,
 	TEXT,
@@ -15,6 +5,48 @@ export enum NodeTypes {
 	INTERPOLATION,
 	SIMPLE_EXPRESSION,
 	COMPOUND_EXPRESSION,
+}
+
+export interface ASTNode {
+	type: NodeTypes;
+}
+
+export interface ASTRoot extends ASTNode {
+	codegenNode: ASTNode;
+	helpers: symbol[];
+	children: ASTNode[];
+}
+
+export interface ElementNode extends ASTNode {
+	tag: string;
+	children: ASTNode[];
+}
+
+export interface TextNode extends ASTNode {
+	content: string;
+}
+
+export interface ExpressionNode extends ASTNode {
+	content: string;
+}
+
+export interface InterPolationNode extends ASTNode {
+	content: ExpressionNode;
+}
+
+export type CompoundExpressionChild = string | TextNode | InterPolationNode;
+
+export interface CompoundExpressionNode extends ASTNode {
+	children: CompoundExpressionChild[];
+}
+
+export function createCompoundExpressionNode(
+	node: TextNode | InterPolationNode
+): CompoundExpressionNode {
+	return {
+		type: NodeTypes.COMPOUND_EXPRESSION,
+		children: [node],
+	};
 }
 
 export const isRootNode = (node: ASTNode): node is ASTRoot =>
@@ -36,3 +68,6 @@ export const isCompoundExpressionNode = (
 	node: ASTNode
 ): node is CompoundExpressionNode =>
 	node.type === NodeTypes.COMPOUND_EXPRESSION;
+
+export const isText = (node: ASTNode): node is TextNode | InterPolationNode =>
+	isTextNode(node) || isInterpolationNode(node);

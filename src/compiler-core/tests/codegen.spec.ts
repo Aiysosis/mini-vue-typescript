@@ -60,7 +60,7 @@ describe("codegen", () => {
 		expect(code).toMatchSnapshot();
 	});
 
-	test.only("comprehension", () => {
+	test("comprehension", () => {
 		/**
          * *<div>hi,{{ message }}</div>
 			import { toDisplayString as _toDisplayString, openBlock as _openBlock, createElementBlock as _createElementBlock } from "vue"

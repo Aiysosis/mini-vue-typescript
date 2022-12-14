@@ -1,21 +1,14 @@
 import { isString } from "@/shared";
 import {
-	isCompoundExpressionNode,
-	isElementNode,
-	isInterpolationNode,
-	isSimpleExpressionNode,
-	isTextNode,
-	NodeTypes,
-} from "./ast";
-import {
 	ASTNode,
 	ASTRoot,
 	CompoundExpressionNode,
 	ElementNode,
 	ExpressionNode,
 	InterPolationNode,
+	NodeTypes,
 	TextNode,
-} from "./parse";
+} from "./ast";
 import {
 	CREATE_ELEMENT_BLOCK,
 	helperMapName,
@@ -29,6 +22,7 @@ export type CodegenContext = {
 	helper: (key: symbol) => string;
 };
 
+//@fn codegen
 export function codegen(ast: ASTRoot) {
 	const context = createCodegenContext();
 
@@ -63,6 +57,7 @@ function genFunctionPreamble(context: CodegenContext, ast: ASTRoot) {
 	push("\n");
 }
 
+//@fn genNode
 function genNode(context: CodegenContext, node: ASTNode) {
 	switch (node.type) {
 		case NodeTypes.ELEMENT:
