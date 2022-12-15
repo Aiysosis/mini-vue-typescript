@@ -8,6 +8,7 @@ import {
 	InterPolationNode,
 	NodeTypes,
 	TextNode,
+	VNodeCall,
 } from "./ast";
 import {
 	CREATE_ELEMENT_BLOCK,
@@ -22,7 +23,7 @@ export type CodegenContext = {
 	helper: (key: symbol) => string;
 };
 
-//@fn codegen
+//* 在transform之后，codegenNode 已经产生
 export function codegen(ast: ASTRoot) {
 	const context = createCodegenContext();
 
@@ -63,6 +64,8 @@ function genNode(context: CodegenContext, node: ASTNode) {
 		case NodeTypes.ELEMENT:
 			genElement(context, node as ElementNode);
 			break;
+		case NodeTypes.VNODE_CALL:
+			genVNodeCall(context, node as VNodeCall);
 		case NodeTypes.TEXT:
 			genText(context, node as TextNode);
 			break;
@@ -79,6 +82,10 @@ function genNode(context: CodegenContext, node: ASTNode) {
 			break;
 	}
 }
+function genVNodeCall(context: CodegenContext, arg1: VNodeCall) {
+	throw new Error("Function not implemented.");
+}
+
 function genCompoundExpressionNode(
 	context: CodegenContext,
 	node: CompoundExpressionNode
@@ -95,16 +102,14 @@ function genCompoundExpressionNode(
 
 function genElement(context: CodegenContext, node: ElementNode) {
 	const { push, helper } = context;
+	const { tag, children } = node;
 	push("(");
 	push(helper(OPEN_BLOCK));
 	push(", ");
 	push(helper(CREATE_ELEMENT_BLOCK));
-	push(`("${node.tag}"), null, `);
+	push(`("${tag}"), null, `);
 
-	for (const child of node.children) {
-		console.log("gen child: ", child);
-		genNode(context, child);
-	}
+	// genNode(context, children);
 
 	push(")");
 }

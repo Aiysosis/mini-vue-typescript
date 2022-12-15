@@ -91,7 +91,7 @@ describe("parse", () => {
 
 	it("should throw an error when lack end tag", () => {
 		expect(() => {
-			baseParse("<div><span></div>");
+			baseParse("<div><span></div></span>");
 		}).toThrow();
 	});
 });

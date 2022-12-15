@@ -1,5 +1,5 @@
-import { isTextNode } from "../src/ast";
-import { baseParse, ElementNode, TextNode } from "../src/parse";
+import { ElementNode, isTextNode, TextNode } from "../src/ast";
+import { baseParse } from "../src/parse";
 import { transform, TransformPlugin } from "../src/transform";
 
 describe("transform", () => {

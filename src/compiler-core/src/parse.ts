@@ -12,8 +12,16 @@ const enum TagType {
 	END,
 }
 
+export const enum TextModes {
+	DATA,
+	RCDATA,
+	RAWTEXT,
+	CDATA,
+}
+
 type ParseContext = {
 	source: string;
+	mode: TextModes;
 };
 
 export function baseParse(content: string) {
@@ -25,19 +33,36 @@ export function baseParse(content: string) {
 	return createRoot(parseChildren(context, []));
 }
 
-//@fn parseChildren
+//? 递归下降算法 @fn parseChildren
 function parseChildren(context: ParseContext, ancesters: ElementNode[]) {
 	const nodes: ASTNode[] = [];
 
 	while (!isEnd(context, ancesters)) {
 		let node = null;
-		const s = context.source;
+		const { mode, source } = context;
 
-		if (s.startsWith("{{")) {
-			node = parseInterpolation(context);
-		} else if (s[0] == "<") {
-			if (/[a-zA-Z]/.test(s[1])) {
-				node = parseElement(context, ancesters);
+		//*只有在 DATA 和 RCDATA 的状态下才解析插值
+		//*只有在 DATA 状态下才解析html标签
+		if (mode === TextModes.DATA || mode === TextModes.RCDATA) {
+			if (mode === TextModes.DATA && source[0] === "<") {
+				//* tag: <div>, endTag: </div>, comment: <!-->, CDATA: <![CDATA[]]>
+				if (source[1] === "!") {
+					if (source.startsWith("<!--")) {
+						// node = parseComment(context);
+					} else if (source.startsWith("<![CDATA[")) {
+						// node = parseCDATA(context, ancesters);
+					}
+				} else if (source[1] === "/") {
+					//! this is an error case
+					//! here we do nothing, and throw error in parseElement
+					continue;
+				} else if (/[a-z]/i.test(source[1])) {
+					//tag
+					node = parseElement(context, ancesters);
+				}
+			} else if (source.startsWith("{{")) {
+				//插值
+				node = parseInterpolation(context);
 			}
 		}
 
@@ -47,15 +72,18 @@ function parseChildren(context: ParseContext, ancesters: ElementNode[]) {
 
 		nodes.push(node);
 	}
+
 	return nodes;
 }
 
 function isEnd(context: ParseContext, ancesters: ElementNode[]) {
-	let s = context.source;
+	const s = context.source;
 	if (s.startsWith("</")) {
 		//? 为什么要遍历而不是直接检查栈顶？ 因为标签不一定是完全匹配的，因此要使用更健壮的检查策略，否则在出问题时会陷入死循环
-		for (const el of ancesters) {
-			if (s.slice(2, 2 + el.tag.length) === el.tag) return true;
+		//* 从后往前搜索以提高命中率
+		for (let i = ancesters.length - 1; i >= 0; i--) {
+			const el = ancesters[i];
+			if (s.startsWith(`</${el.tag}>`)) return true;
 		}
 	}
 	return !s;
@@ -96,16 +124,17 @@ function parseElement(
 	ancesters: ElementNode[]
 ): ElementNode {
 	//? 思路，先提取出tag内容，然后进行 括号匹配？找到相应的闭合标签
+
 	const element = parseTag(context, TagType.START);
 
 	ancesters.push(element);
 	element.children = parseChildren(context, ancesters);
 	ancesters.pop();
 
-	if (context.source.slice(2, 2 + element.tag.length) === element.tag) {
+	if (context.source.startsWith(`</${element.tag}>`)) {
 		parseTag(context, TagType.END);
 	} else {
-		throw new Error(element.tag + " lack end tag");
+		throw new Error(`[Parse Error]: tag <${element.tag}> lack end tag.`);
 	}
 
 	return element;
@@ -126,6 +155,7 @@ function parseTag(context: ParseContext, type: TagType): ElementNode {
 		type: NodeTypes.ELEMENT,
 		tag,
 		children: [],
+		codegenNode: undefined,
 	};
 }
 
@@ -165,14 +195,17 @@ function advanceBy(context: ParseContext, start: number) {
 function createRoot(children: ASTNode[]): ASTRoot {
 	return {
 		type: NodeTypes.ROOT,
-		codegenNode: null,
 		helpers: [],
 		children,
+		//? 在transformElement中赋值，用于parseElement的后续操作，在其他地方可以直接忽略
+		//? 且这里node的类型是 VnodeCall
+		codegenNode: undefined,
 	};
 }
 
 function createParserContext(content: string): ParseContext {
 	return {
 		source: content,
+		mode: TextModes.DATA,
 	};
 }

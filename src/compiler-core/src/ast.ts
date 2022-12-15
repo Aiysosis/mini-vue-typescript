@@ -1,3 +1,5 @@
+import { Props } from "@/runtime-core/vnode";
+
 export enum NodeTypes {
 	ROOT,
 	TEXT,
@@ -5,6 +7,9 @@ export enum NodeTypes {
 	INTERPOLATION,
 	SIMPLE_EXPRESSION,
 	COMPOUND_EXPRESSION,
+
+	//code_gen
+	VNODE_CALL,
 }
 
 export interface ASTNode {
@@ -20,6 +25,7 @@ export interface ASTRoot extends ASTNode {
 export interface ElementNode extends ASTNode {
 	tag: string;
 	children: ASTNode[];
+	codegenNode: VNodeCall;
 }
 
 export interface TextNode extends ASTNode {
@@ -38,6 +44,12 @@ export type CompoundExpressionChild = string | TextNode | InterPolationNode;
 
 export interface CompoundExpressionNode extends ASTNode {
 	children: CompoundExpressionChild[];
+}
+
+export interface VNodeCall extends ASTNode {
+	tag: string;
+	props: Props;
+	children: ASTNode;
 }
 
 export function createCompoundExpressionNode(
