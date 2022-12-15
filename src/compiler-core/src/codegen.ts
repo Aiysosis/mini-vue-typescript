@@ -43,7 +43,7 @@ function genFunctionBody(context: CodegenContext, ast: ASTRoot) {
 	let functionName = "render";
 	let args = ["_ctx", " _cache", "$props", "$setup", "$data", "$options"];
 	const signature = args.join(", ");
-	push(`export function ${functionName}(${signature}) {\n`);
+	push(`return function ${functionName}(${signature}) {\n`);
 	push("\treturn (");
 	//! 注意，这里传入的是 codegenNode
 	genNode(context, ast.codegenNode);
@@ -57,12 +57,12 @@ function genFunctionPreamble(context: CodegenContext, ast: ASTRoot) {
 	const VueBinging = "vue";
 	// const helpers = ["toDisplayString"]; now recorded in ast object
 	const aliasHelpers = (s: symbol) =>
-		`${helperMapName[s]} as _${helperMapName[s]}`;
+		`${helperMapName[s]}: _${helperMapName[s]}`;
 	if (ast.helpers.length > 0)
 		push(
-			`import { ${ast.helpers
+			`const { ${ast.helpers
 				.map(aliasHelpers)
-				.join(", ")} } from "${VueBinging}"`
+				.join(", ")} } = ${VueBinging};`
 		);
 	newLine(2);
 }

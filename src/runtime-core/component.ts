@@ -12,6 +12,7 @@ export type Data = Record<string, unknown>;
 
 export type Component = {
 	name?: string;
+	template?: string;
 	setup?: (
 		props?: Props,
 		emitsObject?: { emit: Function }
@@ -28,7 +29,7 @@ export type ComponentInstance = {
 	isMounted: boolean;
 	subTree: VNode;
 	proxy: ComponentInstance | null;
-	render?: () => VNode;
+	render?: (_ctx?: any) => VNode;
 	update: Runner;
 	setupState?: Data;
 	next: VNode | null;
@@ -100,6 +101,12 @@ function finishComponentSetup(instance: ComponentInstance) {
 	if (render) {
 		//* 绑定 this
 		instance.render = render.bind(instance.proxy);
+	} else if (compiler && !instance.render) {
+		//* 执行编译函数
+		if (component.template) {
+			component.render = compiler(component.template);
+			instance.render = component.render;
+		}
 	}
 }
 
@@ -111,4 +118,10 @@ export function getCurrentInstance() {
 
 function setCurrentInstance(instance: ComponentInstance | null) {
 	currentInstance = instance;
+}
+
+let compiler;
+
+export function registerRuntimeComplier(_complier) {
+	compiler = _complier;
 }

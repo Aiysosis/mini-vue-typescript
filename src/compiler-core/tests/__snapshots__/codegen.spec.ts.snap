@@ -1,33 +1,33 @@
 // Vitest Snapshot v1
 
 exports[`codegen > comprehension 1`] = `
-"import { toDisplayString as _toDisplayString, openBlock as _openBlock, createElementBlock as _createElementBlock } from \\"vue\\"
+"const { toDisplayString as _toDisplayString, openBlock as _openBlock, createElementBlock as _createElementBlock } = vue;
 
-export function render(_ctx,  _cache, $props, $setup, $data, $options) {
+return function render(_ctx,  _cache, $props, $setup, $data, $options) {
 	return (_createElementBlock(\\"div\\", null, \\"hi,\\" + _toDisplayString(_ctx.message)))
 }"
 `;
 
 exports[`codegen > element 1`] = `
-"import { openBlock as _openBlock, createElementBlock as _createElementBlock } from \\"vue\\"
+"const { openBlock as _openBlock, createElementBlock as _createElementBlock } = vue;
 
-export function render(_ctx,  _cache, $props, $setup, $data, $options) {
+return function render(_ctx,  _cache, $props, $setup, $data, $options) {
 	return (_createElementBlock(\\"div\\"))
 }"
 `;
 
 exports[`codegen > interpolation 1`] = `
-"import { toDisplayString as _toDisplayString } from \\"vue\\"
+"const { toDisplayString as _toDisplayString } = vue;
 
-export function render(_ctx,  _cache, $props, $setup, $data, $options) {
+return function render(_ctx,  _cache, $props, $setup, $data, $options) {
 	return (_toDisplayString(_ctx.message))
 }"
 `;
 
 exports[`codegen > nested element 1`] = `
-"import { openBlock as _openBlock, createElementBlock as _createElementBlock } from \\"vue\\"
+"const { openBlock as _openBlock, createElementBlock as _createElementBlock } = vue;
 
-export function render(_ctx,  _cache, $props, $setup, $data, $options) {
+return function render(_ctx,  _cache, $props, $setup, $data, $options) {
 	return (_createElementBlock(\\"div\\", null, [_createElementBlock(\\"h1\\", null, \\"hello\\"), _createElementBlock(\\"p\\", null, \\"vue\\")]))
 }"
 `;
@@ -35,7 +35,7 @@ export function render(_ctx,  _cache, $props, $setup, $data, $options) {
 exports[`codegen > string 1`] = `
 "
 
-export function render(_ctx,  _cache, $props, $setup, $data, $options) {
+return function render(_ctx,  _cache, $props, $setup, $data, $options) {
 	return (\\"hi\\")
 }"
 `;

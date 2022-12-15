@@ -442,7 +442,11 @@ export function createRenderer(options: RendererOptions) {
 			() => {
 				//* 调用组件的render函数以获取vnode，然后挂载
 				if (!instance.isMounted) {
-					const subTree = (instance.subTree = instance.render());
+					const { proxy } = instance;
+					const subTree = (instance.subTree = instance.render.call(
+						proxy,
+						proxy
+					));
 					patch(null, subTree, container);
 					//! 这一步很关键，patch中设置的 el是为subTree节点设置的，这里还要再次赋值
 					instance.vnode.el = subTree.el;
@@ -458,7 +462,8 @@ export function createRenderer(options: RendererOptions) {
 
 					//* 拿到新的 subtree
 					//* 这里是由 effect触发的，而 proxy的绑定在setupComponent中，所以需要再次绑定
-					const subTree = instance.render.call(instance.proxy);
+					const { proxy } = instance;
+					const subTree = instance.render.call(proxy, proxy);
 					const prevSubTree = instance.subTree;
 					console.log("prev: ", prevSubTree);
 					console.log("current", subTree);
