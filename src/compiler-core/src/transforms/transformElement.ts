@@ -1,6 +1,6 @@
 //? transform 作为中间层，充当parse和codegen之间的桥梁
 
-import { isElementNode, NodeTypes, VNodeCall } from "../ast";
+import { createVNodeCall, isElementNode, NodeTypes, VNodeCall } from "../ast";
 import { CREATE_ELEMENT_BLOCK, OPEN_BLOCK } from "../runtimeHelpers";
 import { TransformPlugin } from "../transform";
 
@@ -14,7 +14,7 @@ export const transformElement: TransformPlugin = (node, context) => {
 			const vnodeTag = node.tag;
 
 			//todo props
-			const vnodeProps = {};
+			const vnodeProps = null;
 
 			//*children
 			let vnodeChildren = null;
@@ -34,7 +34,11 @@ export const transformElement: TransformPlugin = (node, context) => {
 				children: vnodeChildren,
 			};
 
-			node.codegenNode = vnodeElement;
+			node.codegenNode = createVNodeCall(
+				vnodeTag,
+				vnodeProps,
+				vnodeChildren
+			);
 		}
 	};
 };

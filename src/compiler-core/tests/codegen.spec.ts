@@ -10,7 +10,13 @@ describe("codegen", () => {
 	test("string", () => {
 		const ast = baseParse("hi");
 
-		transform(ast, { nodeTransforms: [transformElement, transformText] });
+		transform(ast, {
+			nodeTransforms: [
+				transformElement,
+				transformText,
+				transformExpression,
+			],
+		});
 
 		console.log("ast: ", ast);
 
@@ -56,12 +62,31 @@ describe("codegen", () => {
          */
 		const ast = baseParse("<div></div>");
 
-		transform(ast, { nodeTransforms: [transformElement, transformText] });
-
+		transform(ast, {
+			nodeTransforms: [
+				transformElement,
+				transformText,
+				transformExpression,
+			],
+		});
 		console.log("ast: ", ast);
 
 		const { code } = codegen(ast);
 
+		expect(code).toMatchSnapshot();
+	});
+
+	test("nested element", () => {
+		const ast = baseParse("<div><h1>hello</h1><p>vue</p></div>");
+		transform(ast, {
+			nodeTransforms: [
+				transformElement,
+				transformText,
+				transformExpression,
+			],
+		});
+		const { code } = codegen(ast);
+		console.log(code);
 		expect(code).toMatchSnapshot();
 	});
 
@@ -76,7 +101,13 @@ describe("codegen", () => {
          */
 		const ast = baseParse("<div>hi,{{ message }}</div>");
 
-		transform(ast, { nodeTransforms: [transformElement, transformText] });
+		transform(ast, {
+			nodeTransforms: [
+				transformElement,
+				transformText,
+				transformExpression,
+			],
+		});
 
 		console.log("ast: ", ast);
 

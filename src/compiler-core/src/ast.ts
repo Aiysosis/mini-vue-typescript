@@ -17,7 +17,7 @@ export interface ASTNode {
 }
 
 export interface ASTRoot extends ASTNode {
-	codegenNode: ASTNode;
+	codegenNode: ASTNode; //? 这里设置得宽泛一些
 	helpers: symbol[];
 	children: ASTNode[];
 }
@@ -49,7 +49,20 @@ export interface CompoundExpressionNode extends ASTNode {
 export interface VNodeCall extends ASTNode {
 	tag: string;
 	props: Props;
-	children: ASTNode;
+	children: ASTNode | ASTNode[];
+}
+
+export function createVNodeCall(
+	tag: string,
+	props: Props,
+	children: ASTNode | ASTNode[]
+): VNodeCall {
+	return {
+		type: NodeTypes.VNODE_CALL,
+		tag,
+		props,
+		children,
+	};
 }
 
 export function createCompoundExpressionNode(

@@ -23,6 +23,7 @@ describe("parse", () => {
 			expect(ast.children[0]).toStrictEqual({
 				type: NodeTypes.ELEMENT,
 				tag: "div",
+				codegenNode: undefined,
 				children: [],
 			});
 		});
@@ -45,6 +46,7 @@ describe("parse", () => {
 		expect(ast.children[0]).toStrictEqual({
 			type: NodeTypes.ELEMENT,
 			tag: "div",
+			codegenNode: undefined,
 			children: [
 				{
 					type: NodeTypes.TEXT,
@@ -67,10 +69,12 @@ describe("parse", () => {
 		expect(ast.children[0]).toStrictEqual({
 			type: NodeTypes.ELEMENT,
 			tag: "div",
+			codegenNode: undefined,
 			children: [
 				{
 					type: NodeTypes.ELEMENT,
 					tag: "p",
+					codegenNode: undefined,
 					children: [
 						{
 							type: NodeTypes.TEXT,

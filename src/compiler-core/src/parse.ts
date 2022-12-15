@@ -53,10 +53,10 @@ function parseChildren(context: ParseContext, ancesters: ElementNode[]) {
 						// node = parseCDATA(context, ancesters);
 					}
 				} else if (source[1] === "/") {
-					//! this is an error case
-					//! here we do nothing, and throw error in parseElement
+					//! should not reach this branch
+					//! but here we do nothing, and throw error in parseElement
 					continue;
-				} else if (/[a-z]/i.test(source[1])) {
+				} else if (/[a-z0-9]/i.test(source[1])) {
 					//tag
 					node = parseElement(context, ancesters);
 				}
@@ -142,7 +142,7 @@ function parseElement(
 
 //@fn parseTag
 function parseTag(context: ParseContext, type: TagType): ElementNode {
-	const match = /^<\/?([a-z]+)/i.exec(context.source);
+	const match = /^<\/?([a-z0-9]+)/i.exec(context.source);
 	let tag: string;
 	if (match) {
 		tag = match[1];
